@@ -62,7 +62,7 @@
 
   /** Answers of the FICTIONAL guided-demo astronaut (made-up values): mostly green, several yellow, one red (temperature). */
   function guided() {
-    return { hr: 72, sys: 138, dia: 82, glucose: 118, temp: 38.6, sleep: 5.2, mood: 2, exercise: 40, fatigue: 2, dizzy: 1, vision: 1, pain: 1, emergency: 'no', wbc: 11.8, neut: 5200, lymph: '' };
+    return { hr: 72, sys: 138, dia: 82, glucose: 118, temp: 38.6, sleep: 5.2, mood: 2, headache: 1, reaction: 340, spo2: 97, rr: 16, urine: 5, fluids: 1.2, flank: 0, meals: 3, discomfort: 1, exercise: 40, grip: 33, fatigue: 2, dizzy: 1, vision: 1, pain: 1, emergency: 'no', wbc: 11.8, neut: 5200, lymph: '' };
   }
 
   var api = { generate: generate, guided: guided };

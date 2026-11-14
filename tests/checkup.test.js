@@ -9,8 +9,8 @@ let n = 0;
 function test(name, fn) { fn(); n++; console.log('ok -', name); }
 const Q = id => C.question(id);
 
-test('16 slides: 8 vitals, 4 symptoms, 1 red-flag, 3 labs, in order', () => {
-  assert.deepStrictEqual(C.QUESTIONS.map(q => q.kind).join(','), 'vital,vital,vital,vital,vital,vital,vital,vital,symptom,symptom,symptom,symptom,redflag,lab,lab,lab');
+test('26 slides: 14 vitals, 5 symptoms (incl. flank pain), 1 red-flag, 3 labs; every slide has an organ except the red flag', () => {
+  assert.deepStrictEqual(C.QUESTIONS.map(q => q.kind).join(','), 'vital,vital,vital,vital,vital,vital,vital,vital,vital,symptom,symptom,vital,vital,symptom,vital,vital,vital,vital,vital,vital,symptom,symptom,redflag,lab,lab,lab');
 });
 test('parse: numbers with comma, limits, integers, choices, skipped', () => {
   assert.strictEqual(C.parse(Q('hr'), '72,5').value, 72.5);
@@ -41,6 +41,7 @@ test('advice: none for green/no data, red always starts with callSurgeon, no med
 test('every non-green case of every question has actions (low and high where possible)', () => {
   C.QUESTIONS.forEach(q => {
     const z = C.zonesOf(q);
+    if (q.kind === 'vital' && !z) return; // baseline-only slides have no zones
     const cases = q.kind === 'symptom' ? [2, 3] : q.kind === 'redflag' ? ['yes'] : [z.ok[0] - 0.01, z.watch[0] - 5, z.ok[1] + 0.01, z.watch[1] + 5];
     let nonOk = 0;
     cases.forEach(v => { const ev = C.evaluate(q, v); if (ev.status === 'ok') return; nonOk++; assert.ok(C.advice(q, ev).length > 0, q.id + ' ' + v); });
@@ -49,11 +50,11 @@ test('every non-green case of every question has actions (low and high where pos
 });
 test('run: guided demo astronaut is mostly green with yellow cases and one red', () => {
   const r = C.run(Demo.guided());
-  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 8, watch: 6, attention: 1, nodata: 1 });
+  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 14, watch: 8, attention: 1, nodata: 3 });
   assert.strictEqual(r.sorted[0].id, 'temp'); assert.ok(r.items.find(i => i.id === 'lymph').skipped);
 });
 test('run: nothing answered is nodata, never ok', () => {
-  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 16);
+  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 26);
 });
 test('toEntry: only the vitals that were answered; null when none', () => {
   assert.deepStrictEqual(C.toEntry({ hr: 72, sys: '138', mood: 2, exercise: 45, fatigue: 3, wbc: 9 }, '2026-11-14'), { date: '2026-11-14', hr: 72, sys: 138, mood: 2, exercise: 45 });
@@ -77,3 +78,31 @@ test('every action and question text exists in all four languages', () => {
   });
 });
 console.log(n + ' checkup tests passed');
+
+test('new organ slides: each organ region has its own questions, all question ids have text', () => {
+  const organs = new Set(C.QUESTIONS.filter(q => q.kind !== 'redflag').map(q => q.organ));
+  ['lungs', 'kidneys', 'gut', 'mind', 'heart', 'bones'].forEach(o => assert.ok(organs.has(o), o));
+  assert.strictEqual(C.evaluate(Q('spo2'), 97).status, 'ok');
+  assert.strictEqual(C.evaluate(Q('spo2'), 92).status, 'watch');
+  assert.strictEqual(C.evaluate(Q('spo2'), 85).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('urine'), 7).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('fluids'), 0.5).status, 'attention');
+  assert.ok(C.advice(Q('spo2'), C.evaluate(Q('spo2'), 92)).includes('checkAir'));
+  assert.ok(C.advice(Q('fluids'), C.evaluate(Q('fluids'), 1.0)).includes('drinkMore'));
+});
+
+test('baseline-only slides (reaction, grip) are recorded without a colour and do not crash', () => {
+  ['reaction', 'grip'].forEach(id => {
+    const ev = C.evaluate(Q(id), 300);
+    assert.strictEqual(ev.status, 'nodata'); assert.strictEqual(ev.baselineOnly, true);
+    assert.deepStrictEqual(C.advice(Q(id), ev), []);
+  });
+});
+
+test('reactionMedian: median of valid taps, needs 3, ignores nonsense', () => {
+  assert.strictEqual(C.reactionMedian([300, 250, 400, 280, 310]), 300);
+  assert.strictEqual(C.reactionMedian([300, 250, 400, 280]), 290);
+  assert.strictEqual(C.reactionMedian([300, 250]), null);
+  assert.strictEqual(C.reactionMedian([300, 5, null, 250, 20000, 260]), 260);
+  assert.strictEqual(C.reactionMedian(), null);
+});

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astronot Self Check — NASA Space Apps 2026 prototype</title>
-  <link rel="stylesheet" href="css/style.css?v=20261115a">
+  <link rel="stylesheet" href="css/style.css?v=20261115b">
 </head>
 <body>
   <header class="top">
@@ -45,11 +45,7 @@
   <main class="console">
     <aside class="rail rail-left" aria-label="Users and data entry">
       <div class="toolbar">
-        <div class="source-toggle" role="group" aria-label="Data source" data-i18n-aria="srcLabel">
-          <button id="btn-demo" class="seg active" aria-pressed="true" data-i18n="btnDemo">Simulated demo</button>
-          <button id="btn-manual" class="seg" aria-pressed="false" data-i18n="btnManual">My users</button>
-        </div>
-        <span id="source-badge" class="badge sim">DATA: SIMULATED (fictional)</span>
+        <span id="source-badge" class="badge man"></span>
       </div>
 
       <section class="card" aria-labelledby="h-users">
@@ -122,6 +118,10 @@
             <rect class="zone" transform="translate(110 0)" x="99" y="73" width="22" height="15" rx="7"></rect>
             <line class="lead" x1="220" y1="81" x2="128" y2="81"/><circle class="dot" cx="220" cy="81" r="3"/><text class="lbl" x="122" y="85" text-anchor="end" data-i18n="region.immune.title">region.immune.title</text>
           </g>
+          <g class="region" data-region="lungs" tabindex="0" role="button" aria-label="Lungs and breathing">
+            <g transform="translate(110 0)"><ellipse class="zone" cx="86" cy="128" rx="16" ry="28"></ellipse><ellipse class="zone" cx="134" cy="128" rx="16" ry="28"></ellipse></g>
+            <line class="lead" x1="250" y1="104" x2="312" y2="104"/><circle class="dot" cx="250" cy="104" r="3"/><text class="lbl" x="318" y="108" text-anchor="start" data-i18n="region.lungs.title">region.lungs.title</text>
+          </g>
           <g class="region" data-region="heart" tabindex="0" role="button" aria-label="Heart and circulation">
             <g transform="translate(110 0)"><path class="zone beat" d="M114 152 C96 138 94 122 104 119 C109 118 113 121 114 126 C115 121 119 118 124 119 C134 122 132 138 114 152 Z"></path></g>
             <line class="lead" x1="224" y1="135" x2="312" y2="135"/><circle class="dot" cx="224" cy="135" r="3"/><text class="lbl" x="318" y="139" text-anchor="start" data-i18n="region.heart.title">region.heart.title</text>
@@ -133,6 +133,14 @@
           <g class="region" data-region="whole" tabindex="0" role="button" aria-label="Whole body temperature">
             <path class="zone" transform="translate(110 0)" d="M119.0 88.0 C122.5 89.3 132.8 93.5 140.0 96.0 C147.2 98.5 156.5 99.7 162.0 103.0 C167.5 106.3 170.2 108.2 173.0 116.0 C175.8 123.8 177.0 137.7 179.0 150.0 C181.0 162.3 183.0 179.3 185.0 190.0 C187.0 200.7 189.3 207.0 191.0 214.0 C192.7 221.0 194.2 226.7 195.0 232.0 C195.8 237.3 197.0 242.8 196.0 246.0 C195.0 249.2 191.2 251.0 189.0 251.0 C186.8 251.0 184.5 249.2 183.0 246.0 C181.5 242.8 181.2 237.3 180.0 232.0 C178.8 226.7 178.0 222.0 176.0 214.0 C174.0 206.0 170.7 194.7 168.0 184.0 C165.3 173.3 162.2 159.0 160.0 150.0 C157.8 141.0 155.8 133.3 155.0 130.0 Z M101.0 88.0 C97.5 89.3 87.2 93.5 80.0 96.0 C72.8 98.5 63.5 99.7 58.0 103.0 C52.5 106.3 49.8 108.2 47.0 116.0 C44.2 123.8 43.0 137.7 41.0 150.0 C39.0 162.3 37.0 179.3 35.0 190.0 C33.0 200.7 30.7 207.0 29.0 214.0 C27.3 221.0 25.8 226.7 25.0 232.0 C24.2 237.3 23.0 242.8 24.0 246.0 C25.0 249.2 28.8 251.0 31.0 251.0 C33.2 251.0 35.5 249.2 37.0 246.0 C38.5 242.8 38.8 237.3 40.0 232.0 C41.2 226.7 42.0 222.0 44.0 214.0 C46.0 206.0 49.3 194.7 52.0 184.0 C54.7 173.3 57.8 159.0 60.0 150.0 C62.2 141.0 64.2 133.3 65.0 130.0 Z M74 228 L146 228 C150 246 140 262 110 270 C80 262 70 246 74 228 Z"></path>
             <line class="lead" x1="140" y1="236" x2="128" y2="236"/><circle class="dot" cx="140" cy="236" r="3"/><text class="lbl" x="122" y="240" text-anchor="end" data-i18n="region.whole.title">region.whole.title</text>
+          </g>
+          <g class="region" data-region="kidneys" tabindex="0" role="button" aria-label="Kidneys and hydration">
+            <g transform="translate(110 0)"><ellipse class="zone" cx="95" cy="212" rx="7" ry="12"></ellipse><ellipse class="zone" cx="125" cy="212" rx="7" ry="12"></ellipse></g>
+            <line class="lead" x1="235" y1="212" x2="312" y2="212"/><circle class="dot" cx="235" cy="212" r="3"/><text class="lbl" x="318" y="216" text-anchor="start" data-i18n="region.kidneys.title">region.kidneys.title</text>
+          </g>
+          <g class="region" data-region="gut" tabindex="0" role="button" aria-label="Digestion">
+            <ellipse class="zone" transform="translate(110 0)" cx="110" cy="250" rx="20" ry="11"></ellipse>
+            <line class="lead" x1="220" y1="260" x2="128" y2="270"/><circle class="dot" cx="220" cy="250" r="3"/><text class="lbl" x="122" y="274" text-anchor="end" data-i18n="region.gut.title">region.gut.title</text>
           </g>
           <g class="region" data-region="bones" tabindex="0" role="button" aria-label="Bones and muscle">
             <path class="zone" transform="translate(110 0)" d="M149.0 262.0 C148.5 268.3 147.0 287.8 146.0 300.0 C145.0 312.2 143.8 326.3 143.0 335.0 C142.2 343.7 141.3 343.7 141.0 352.0 C140.7 360.3 141.7 374.5 141.0 385.0 C140.3 395.5 137.5 407.5 137.0 415.0 C136.5 422.5 136.8 426.3 138.0 430.0 C139.2 433.7 146.3 435.8 144.0 437.0 C141.7 438.2 127.5 438.5 124.0 437.0 C120.5 435.5 123.0 436.7 123.0 428.0 C123.0 419.3 124.2 397.7 124.0 385.0 C123.8 372.3 122.7 360.3 122.0 352.0 C121.3 343.7 120.7 343.7 120.0 335.0 C119.3 326.3 119.0 311.5 118.0 300.0 C117.0 288.5 115.0 272.3 114.0 266.0 C113.0 259.7 112.3 262.7 112.0 262.0 Z M71.0 262.0 C71.5 268.3 73.0 287.8 74.0 300.0 C75.0 312.2 76.2 326.3 77.0 335.0 C77.8 343.7 78.7 343.7 79.0 352.0 C79.3 360.3 78.3 374.5 79.0 385.0 C79.7 395.5 82.5 407.5 83.0 415.0 C83.5 422.5 83.2 426.3 82.0 430.0 C80.8 433.7 73.7 435.8 76.0 437.0 C78.3 438.2 92.5 438.5 96.0 437.0 C99.5 435.5 97.0 436.7 97.0 428.0 C97.0 419.3 95.8 397.7 96.0 385.0 C96.2 372.3 97.3 360.3 98.0 352.0 C98.7 343.7 99.3 343.7 100.0 335.0 C100.7 326.3 101.0 311.5 102.0 300.0 C103.0 288.5 105.0 272.3 106.0 266.0 C107.0 259.7 107.7 262.7 108.0 262.0 Z"></path>
@@ -168,21 +176,21 @@
        Status levels use configurable statistical cut-offs (|z| ≥ 2 and ≥ 3 relative to your first 7 readings), not clinical thresholds.</p>
   </footer>
 
-  <script src="js/i18n.js?v=20261115a"></script>
-  <script src="js/core.js?v=20261115a"></script>
-  <script src="js/store.js?v=20261115a"></script>
-  <script src="js/osdr.js?v=20261115a"></script>
-  <script src="js/expression.js?v=20261115a"></script>
-  <script src="js/osd635.js?v=20261115a"></script>
-  <script src="js/osd569-data.js?v=20261115a"></script>
-  <script src="js/osd569.js?v=20261115a"></script>
-  <script src="js/live.js?v=20261115a"></script>
-  <script src="js/immune.js?v=20261115a"></script>
-  <script src="js/checkup.js?v=20261115a"></script>
-  <script src="js/charts.js?v=20261115a"></script>
-  <script src="js/demo.js?v=20261115a"></script>
-  <script src="js/content.js?v=20261115a"></script>
-  <script src="js/views.js?v=20261115a"></script>
-  <script src="js/app.js?v=20261115a"></script>
+  <script src="js/i18n.js?v=20261115b"></script>
+  <script src="js/core.js?v=20261115b"></script>
+  <script src="js/store.js?v=20261115b"></script>
+  <script src="js/osdr.js?v=20261115b"></script>
+  <script src="js/expression.js?v=20261115b"></script>
+  <script src="js/osd635.js?v=20261115b"></script>
+  <script src="js/osd569-data.js?v=20261115b"></script>
+  <script src="js/osd569.js?v=20261115b"></script>
+  <script src="js/live.js?v=20261115b"></script>
+  <script src="js/immune.js?v=20261115b"></script>
+  <script src="js/checkup.js?v=20261115b"></script>
+  <script src="js/charts.js?v=20261115b"></script>
+  <script src="js/demo.js?v=20261115b"></script>
+  <script src="js/content.js?v=20261115b"></script>
+  <script src="js/views.js?v=20261115b"></script>
+  <script src="js/app.js?v=20261115b"></script>
 </body>
 </html>

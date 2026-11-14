@@ -5,7 +5,7 @@
   var ICON = { ok: '✓', watch: '!', attention: '▲', nodata: '–' };
   var t = I18n.t;
 
-  var state = { tab: 'checkup', mode: 'demo', region: null, demo: Demo.generate(2026, 30) };
+  var state = { tab: 'checkup', mode: 'manual', region: null };
   var store = null; // created in init(), after the language is known
 
   // localStorage that never throws (blocked storage -> data lives in memory for this page view)
@@ -29,10 +29,10 @@
   }
   function $(id) { return document.getElementById(id); }
   function indLabel(ind) { return t('ind.' + ind.id); }
-  function unitOf(ind) { return ind.unit === 'pts' ? t('unit.pts') : ind.unit === 'h' ? t('unit.h') : ind.unit; }
+  function unitOf(ind) { return ['pts', 'h', 'scale', 'meals'].indexOf(ind.unit) >= 0 ? t('unit.' + ind.unit) : ind.unit; }
   function fmt(x, ind) { return typeof x === 'number' ? (ind && ind.step < 1 ? x.toFixed(1) : String(Math.round(x * 10) / 10)) : '—'; }
 
-  function entries() { return state.mode === 'demo' ? state.demo : store.entriesOf(store.current()); }
+  function entries() { return store.entriesOf(store.current()); }
 
   function chip(status) {
     return el('span', { class: 'chip ' + status }, [ICON[status] + ' ' + t('status.' + status)]);
@@ -112,7 +112,7 @@
 
   // adds the immune indicators (own blood-count values, immune.js) to the core assessment; the demo has none
   function withImmune(base) {
-    var im = Immune.assess(state.mode === 'demo' ? [] : store.immuneOf(store.current()));
+    var im = Immune.assess(store.immuneOf(store.current()));
     var ids = Object.keys(im.per), all = base.counts;
     ids.forEach(function (id) { base.per[id] = im.per[id]; all[im.per[id].status]++; });
     var statuses = Object.keys(base.per).map(function (k) { return base.per[k].status; });
@@ -191,16 +191,9 @@
 
   function renderBadge() {
     var b = $('source-badge');
-    if (state.mode === 'demo') { b.className = 'badge sim'; b.textContent = t('badgeSim'); }
-    else {
-      var u = store.currentUser();
-      b.className = 'badge man';
-      b.textContent = u ? t('badgeMan', { user: u.name, n: u.entries.length }) : t('users.none');
-    }
-    $('btn-demo').classList.toggle('active', state.mode === 'demo');
-    $('btn-demo').setAttribute('aria-pressed', String(state.mode === 'demo'));
-    $('btn-manual').classList.toggle('active', state.mode === 'manual');
-    $('btn-manual').setAttribute('aria-pressed', String(state.mode === 'manual'));
+    var u = store.currentUser();
+    b.className = 'badge man';
+    b.textContent = u ? t('badgeMan', { user: u.name, n: u.entries.length }) : t('users.none');
   }
 
   function applyStatic() {
@@ -401,8 +394,6 @@
     buildForm();
     buildFlightForm();
     buildImmuneForm();
-    $('btn-demo').addEventListener('click', function () { state.mode = 'demo'; render(); });
-    $('btn-manual').addEventListener('click', function () { state.mode = 'manual'; render(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) {
       b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
     });

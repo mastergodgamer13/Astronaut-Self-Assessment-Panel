@@ -6,7 +6,7 @@ Continuation of *Astronot Self Check* (NASA Space Apps 2026). Goal of this repos
 
 The **Guided check-up** tab (now the first tab) asks 15 questions, one per slide: 7 vitals (heart rate, systolic/diastolic pressure, glucose, temperature, sleep, mood), 4 symptoms (tiredness, dizziness/headache, vision change, muscle/bone pain; none/mild/moderate/severe), one red-flag question (chest pain, trouble breathing, fainting, confusion) and 3 optional blood values (white blood cells, neutrophils, lymphocytes). After each answer: a green/yellow/red status from the prototype reference zones, the zone limits, **what you can do yourself** (general self-care steps: rest, breathing, re-measuring, fluids, sleep schedule, exercise from the mission plan, telling the crew...), and, for glucose and the blood values, what the four real crew members measured (OSD-575 and OSD-569, descriptive only). Red always starts with "contact the flight surgeon or ground medical team now"; there are **no medicines and no doses**. The result slide lists everything, problems first, and can save the vitals as today's check-in (a default user is created if none exists). Missing answers are "no data", never green. Code: `js/checkup.js` (pure, `tests/checkup.test.js`), slides in `js/views.js`.
 
-**Guided demo astronaut:** a fictional astronaut with made-up answers (mostly green, five yellow, one red) walks through the same slides; demo answers are never saved. The old simulated 30-day dashboard demo now tells a story too: sleep, heart rate, mood and blood pressure drift, and a fever on the last two days. Everything is fictional and labelled so.
+**Guided demo astronaut:** a fictional astronaut with made-up answers (mostly green, five yellow, one red) walks through the same slides; demo answers are never saved. The old simulated 30-day dashboard toggle was removed (the guided demo replaces it; `Demo.generate` stays for tests). Everything in the demo is fictional and labelled so.
 
 **Not built yet:** loading crew values live from NASA's data files (the slides use the verified copies of OSD-569/OSD-575 bundled in the app; live file loading needs the relay update), and every wording of the zones and actions still needs flight-surgeon review.
 
@@ -34,7 +34,7 @@ Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for As
 - Compares recent readings with the user's **own baseline** (first 7 readings) and shows one of four statuses: *Usual*, *Watch*, *Attention*, *No data*.
 - **Missing data is never shown as "fine"**: indicators without enough data are grey and counted separately.
 - Clickable body map + region list (keyboard accessible), trend charts with baseline band, "why it matters" and "how to measure" notes.
-- Two clearly separated data sources: **Simulated demo** (fictional, labelled) and **My users** (stored only in the browser's localStorage).
+- Data comes from **My users** only (stored in the browser's localStorage); the guided demo astronaut is never saved.
 - **Users:** add a user, select them, enter their values (up to 12 users; entries are per user).
 - **Compare users:** latest value and status per person plus an overlay chart. Each status compares a person with their *own* baseline; differences between people are not a health judgment.
 - **Pre-flight vs post-flight (dashboard):** for each of the four OSD-575 crew members, post-flight values (R+1, R+45, R+82, R+194) are shown next to that person's own pre-flight values (L-92, L-44, L-3): pre-flight mean and range, change from the mean, and whether a value is outside the person's own pre-flight range or the laboratory range. Descriptive only, no status labels, no statistics.
@@ -144,3 +144,17 @@ The Immune system region now has a status chip. It uses the user's own white blo
 ## Status from a single check-in (green / yellow / red)
 
 A status no longer needs a week of data. Each indicator's latest value is placed in a reference zone (`Core.REFERENCE`, `Immune.REFERENCE`): green = normal, yellow = take caution, red = needs attention now. The final status is the worse of that zone and the existing deviation from the person's own baseline (which still needs 7 check-ins, or 3 pre-flight lab values). The reference values are prototype values (general adult resting guidance) and must be reviewed by a flight surgeon; they are not a diagnosis. The values and the zone rule are shown under each indicator.
+
+
+## Organs: lungs, kidneys, brain, gut (new)
+
+Four more body regions, each with its own indicators and check-up slides (26 slides now, grouped by organ):
+
+| Region | Indicators | Notes |
+|---|---|---|
+| Lungs | blood oxygen SpO2 %, breathing rate /min | zones: SpO2 95–100 green, 90–94 yellow, <90 red; rate 12–20 green |
+| Kidneys & hydration | urine colour 1–8, fluids drunk today (L), flank pain slide | kidneys cannot be measured at home; indirect hydration signs only |
+| Brain | headache 0–3, reaction time (ms) | in-app 5-tap reaction test (median); reaction time has **no fixed zones**, only own-baseline change |
+| Digestion | meals eaten today, stomach discomfort 0–3 | |
+
+Grip strength and reaction time are "baseline only": the check-up records them and says so instead of colouring them. All zones are prototype values and need flight-surgeon review. Liver and kidney lab values are not included.

@@ -13,11 +13,17 @@
 
   // kind: vital (number, zones from Core.REFERENCE) | symptom (0-3) | redflag (yes/no) | lab (number, zones from Immune.REFERENCE, optional)
   var QUESTIONS = [
-    { id: 'hr', kind: 'vital' }, { id: 'sys', kind: 'vital' }, { id: 'dia', kind: 'vital' }, { id: 'glucose', kind: 'vital' },
-    { id: 'temp', kind: 'vital' }, { id: 'sleep', kind: 'vital' }, { id: 'mood', kind: 'vital' }, { id: 'exercise', kind: 'vital' },
-    { id: 'fatigue', kind: 'symptom' }, { id: 'dizzy', kind: 'symptom' }, { id: 'vision', kind: 'symptom' }, { id: 'pain', kind: 'symptom' },
-    { id: 'emergency', kind: 'redflag' },
-    { id: 'wbc', kind: 'lab' }, { id: 'neut', kind: 'lab' }, { id: 'lymph', kind: 'lab' }
+    { id: 'hr', kind: 'vital', organ: 'heart' }, { id: 'sys', kind: 'vital', organ: 'heart' }, { id: 'dia', kind: 'vital', organ: 'heart' },
+    { id: 'spo2', kind: 'vital', organ: 'lungs' }, { id: 'rr', kind: 'vital', organ: 'lungs' },
+    { id: 'sleep', kind: 'vital', organ: 'mind' }, { id: 'mood', kind: 'vital', organ: 'mind' }, { id: 'headache', kind: 'vital', organ: 'mind' },
+    { id: 'reaction', kind: 'vital', organ: 'mind' }, { id: 'dizzy', kind: 'symptom', organ: 'mind' }, { id: 'vision', kind: 'symptom', organ: 'mind' },
+    { id: 'urine', kind: 'vital', organ: 'kidneys' }, { id: 'fluids', kind: 'vital', organ: 'kidneys' }, { id: 'flank', kind: 'symptom', organ: 'kidneys' },
+    { id: 'meals', kind: 'vital', organ: 'gut' }, { id: 'discomfort', kind: 'vital', organ: 'gut' },
+    { id: 'glucose', kind: 'vital', organ: 'metabolism' }, { id: 'temp', kind: 'vital', organ: 'whole' },
+    { id: 'exercise', kind: 'vital', organ: 'bones' }, { id: 'grip', kind: 'vital', organ: 'bones' },
+    { id: 'pain', kind: 'symptom', organ: 'bones' }, { id: 'fatigue', kind: 'symptom', organ: 'bones' },
+    { id: 'emergency', kind: 'redflag', organ: null },
+    { id: 'wbc', kind: 'lab', organ: 'immune' }, { id: 'neut', kind: 'lab', organ: 'immune' }, { id: 'lymph', kind: 'lab', organ: 'immune' }
   ];
 
   // action ids (texts in i18n 'act.<id>'), by question and direction ('low' / 'high' / 'any')
@@ -30,6 +36,15 @@
     sleep:   { low: ['sleepSchedule', 'dimLight', 'noCaffeine', 'relax'], high: ['sleepSchedule', 'tellCrew'] },
     mood:    { low: ['talk', 'exercise', 'sleepSchedule', 'dailyLog'] },
     exercise: { low: ['exercise', 'stretch', 'nutrition', 'dailyLog'] },
+    reaction: {}, grip: {}, // baseline-only: recorded, no fixed zones, no actions
+    spo2:    { low: ['sitUpright', 'breathe', 'checkAir', 'remeasure', 'tellCrew'] },
+    rr:      { high: ['rest', 'breathe', 'checkAir', 'remeasure'], low: ['remeasure', 'tellCrew'] },
+    headache: { high: ['rest', 'hydrate', 'checkAir', 'tellCrew'] },
+    urine:   { high: ['drinkMore', 'remeasure'] },
+    fluids:  { low: ['drinkMore', 'dailyLog'] },
+    flank:   { any: ['drinkMore', 'rest', 'tellCrew'] },
+    meals:   { low: ['smallMeals', 'nutrition', 'tellCrew'] },
+    discomfort: { high: ['smallMeals', 'hydrate', 'rest', 'tellCrew'] },
     fatigue: { any: ['sleepSchedule', 'exercise', 'nutrition', 'hydrate'] },
     dizzy:   { any: ['sitDown', 'slowPosture', 'hydrate', 'tellCrew'] },
     vision:  { any: ['logVision', 'eyeTest', 'tellCrew'] },
@@ -49,7 +64,7 @@
     return null;
   }
 
-  function zonesOf(q) { return q.kind === 'vital' ? Core.REFERENCE[q.id] : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
+  function zonesOf(q) { return q.kind === 'vital' ? Core.REFERENCE[q.id] || null : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
 
   /**
    * Parse and check one raw answer.
@@ -72,7 +87,9 @@
     if (value === undefined || value === null) return { status: 'nodata', dir: null };
     if (q.kind === 'symptom') return { status: value >= 3 ? 'attention' : value === 2 ? 'watch' : 'ok', dir: 'any' };
     if (q.kind === 'redflag') return { status: value === 'yes' ? 'attention' : 'ok', dir: 'any' };
-    var z = zonesOf(q), status = Core.zoneOf(z, value);
+    var z = zonesOf(q);
+    if (!z) return { status: 'nodata', dir: null, baselineOnly: true }; // no fixed zones: judged against the person's own earlier values only
+    var status = Core.zoneOf(z, value);
     return { status: status, dir: value < z.ok[0] ? 'low' : value > z.ok[1] ? 'high' : null };
   }
 
@@ -98,6 +115,14 @@
     return { items: items, sorted: sorted, counts: counts, overall: Core.worstStatus(items.map(function (i) { return i.status; })) };
   }
 
+  /** Median reaction time (ms) of tap trials; early taps (null) are ignored. Needs at least 3 valid trials, else null. */
+  function reactionMedian(trials) {
+    var v = (trials || []).filter(function (x) { return typeof x === 'number' && isFinite(x) && x >= 80 && x <= 2000; }).sort(function (a, b) { return a - b; });
+    if (v.length < 3) return null;
+    var m = Math.floor(v.length / 2);
+    return Math.round(v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2);
+  }
+
   /** Daily check-in record (core.js entry) from the vital answers that were given, or null when there is none. */
   function toEntry(answers, date) {
     var raw = { date: date };
@@ -121,6 +146,6 @@
     return { n: Object.keys(crew).length, pre: mm(pre), post: mm(post) };
   }
 
-  var api = { QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, crewRange: crewRange };
+  var api = { QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Checkup = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -29,7 +29,15 @@
     { id: 'sleep',   label: 'Sleep duration',       unit: 'h',     min: 0,   max: 24,  step: 0.1, region: 'mind' },
     { id: 'mood',    label: 'Mood (self-rating 1–5)', unit: 'pts', min: 1,   max: 5,   step: 1,   region: 'mind', integer: true },
     { id: 'exercise', label: 'Exercise today',      unit: 'min',   min: 0,   max: 600, step: 1,   region: 'bones', integer: true },
-    { id: 'grip',    label: 'Grip strength',        unit: 'kg',    min: 1,   max: 120, step: 0.5, region: 'bones', baselineOnly: true } // no absolute zones: depends on sex, age, device
+    { id: 'grip',    label: 'Grip strength',        unit: 'kg',    min: 1,   max: 120, step: 0.5, region: 'bones', baselineOnly: true }, // no absolute zones: depends on sex, age, device
+    { id: 'spo2',    label: 'Blood oxygen (SpO2)',  unit: '%',     min: 50,  max: 100, step: 1,   region: 'lungs', integer: true },
+    { id: 'rr',      label: 'Breathing rate',       unit: '/min',  min: 4,   max: 60,  step: 1,   region: 'lungs', integer: true },
+    { id: 'headache', label: 'Headache (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'mind', integer: true },
+    { id: 'reaction', label: 'Reaction time',       unit: 'ms',    min: 100, max: 2000, step: 1,  region: 'mind', integer: true, baselineOnly: true }, // device and person specific
+    { id: 'urine',   label: 'Urine colour (1 pale - 8 dark)', unit: 'scale', min: 1, max: 8, step: 1, region: 'kidneys', integer: true },
+    { id: 'fluids',  label: 'Fluids drunk today',   unit: 'L',     min: 0,   max: 10,  step: 0.1, region: 'kidneys' },
+    { id: 'meals',   label: 'Meals eaten today',    unit: 'meals', min: 0,   max: 10,  step: 1,   region: 'gut', integer: true },
+    { id: 'discomfort', label: 'Stomach discomfort (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'gut', integer: true }
   ];
 
 
@@ -48,7 +56,16 @@
     mood:    { ok: [3, 5],      watch: [2, 5] },
     // NASA: crews now average about two hours of exercise a day (scheduled 2.5 h, six days a week). Below 60 min is yellow; no red
     // (rest days are normal). Grip strength has no absolute zones: it is judged against the person's own baseline only.
-    exercise: { ok: [60, 600],  watch: [0, 600] }
+    exercise: { ok: [60, 600],  watch: [0, 600] },
+    // pulse oximetry: 95-100 usual, 90-94 low, below 90 is a warning sign. Breathing rate: adult resting 12-20 per minute.
+    spo2:     { ok: [95, 100],  watch: [90, 100] },
+    rr:       { ok: [12, 20],   watch: [9, 24] },
+    headache: { ok: [0, 1],     watch: [0, 2] },
+    // urine colour chart 1-8: 1-3 well hydrated, 4-6 getting dry, 7-8 very dark. Fluids: about 1.5 L or more a day is green here.
+    urine:    { ok: [1, 3],     watch: [1, 6] },
+    fluids:   { ok: [1.5, 10],  watch: [0.8, 10] },
+    meals:    { ok: [3, 10],    watch: [1, 10] },
+    discomfort: { ok: [0, 1],   watch: [0, 2] }
   };
 
   /** Zone of one value against a {ok:[lo,hi], watch:[lo,hi]} reference: 'ok' | 'watch' | 'attention'. */
