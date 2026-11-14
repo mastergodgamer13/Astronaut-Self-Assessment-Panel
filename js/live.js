@@ -33,6 +33,13 @@
     return '';
   }
 
+  // release date: NASA gives epoch seconds (or an ISO string) -> 'YYYY-MM-DD' or ''
+  function releaseOf(v) {
+    if (v === '' || v === undefined || v === null) return '';
+    var d = typeof v === 'number' || /^\d{9,}$/.test(String(v)) ? new Date(Number(v) * (Number(v) < 1e11 ? 1000 : 1)) : new Date(String(v));
+    return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+  }
+
   function idNumber(id) { var m = /(\d+)/.exec(str(id)); return m ? Number(m[1]) : null; }
 
   function searchUrl(o) {
@@ -41,6 +48,7 @@
     if (o.term !== undefined) q.push('term=' + encodeURIComponent(o.term));
     q.push('from=' + (o.from || 0), 'size=' + (o.size || 25));
     if (o.type) q.push('type=' + encodeURIComponent(o.type));
+    if (o.sort) q.push('sort=' + encodeURIComponent(o.sort), 'order=' + (o.order || 'DESC'));
     (o.filters || []).forEach(function (f) { q.push('ffield=' + encodeURIComponent(f[0]), 'fvalue=' + encodeURIComponent(f[1])); });
     return BASE + '/osdr/data/search?' + q.join('&');
   }
@@ -70,7 +78,8 @@
       id: id, n: osd ? idNumber(id) : null, external: !osd, title: title, description: desc,
       organism: str(pick(s, ['organism', 'Organism', 'Study Organism'])),
       projectType: str(pick(s, ['Project Type', 'project_type'])),
-      mission: str(pick(s, ['Mission Name', 'mission', 'Mission', 'Flight Program'])),
+      mission: str((s.Mission && typeof s.Mission === 'object' ? s.Mission.Name : '') || pick(s, ['Mission Name', 'mission', 'Flight Program'])),
+      release: releaseOf(pick(s, ['Study Public Release Date', 'publicReleaseDate'])),
       assay: str(pick(s, ['Study Assay Technology Type', 'Study Assay Measurement Type', 'assay'])),
       source: str(pick(s, ['Data Source Type', 'type'])),
       topics: topicsOf(title + ' ' + desc + ' ' + str(pick(s, ['Study Assay Measurement Type', 'Study Factor Name'])))
@@ -106,20 +115,38 @@
     }, function () { return { ok: false, status: 0, data: null, error: 'network' }; });
   }
 
-  /** Searches the catalog. opts: { term, human (default true), page, size, fetchFn } */
+  /**
+   * Searches the catalog for OSDR studies. NASA's search also returns other databases (PRIDE, GEO, MG-RAST...), which have no OSDR page.
+   * Tries: OSDR-only (type=cgene) newest first -> OSDR-only -> no type (other databases filtered out here). First attempt with OSD studies wins.
+   * opts: { term, human (default true), page, size }
+   */
   function search(fetchFn, opts) {
     opts = opts || {};
     var filters = [];
     if (opts.human !== false) filters.push(['organism', 'Homo sapiens']);
-    var url = searchUrl({ term: opts.term || '', from: opts.page || 0, size: opts.size || 25, filters: filters });
-    return getJson(fetchFn, url).then(function (r) {
-      if (!r.ok) return { ok: false, status: r.status, error: r.error, url: url, studies: [], total: 0 };
-      var n = normalizeSearch(r.data);
-      if (!n.recognized) return { ok: false, status: r.status, error: 'shape', url: url, studies: [], total: 0, keys: Object.keys(r.data || {}) };
-      return { ok: true, status: r.status, url: url, studies: n.studies, total: n.total, raw: n.raw };
-    });
+    var base = { term: opts.term || '', from: opts.page || 0, size: opts.size || 25, filters: filters };
+    var attempts = [{ type: 'cgene', sort: 'Study Public Release Date' }, { type: 'cgene' }, {}];
+    var last = null;
+    function run(i) {
+      if (i >= attempts.length) return Promise.resolve(last);
+      var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); Object.keys(attempts[i]).forEach(function (k) { o[k] = attempts[i][k]; });
+      var url = searchUrl(o);
+      return getJson(fetchFn, url).then(function (r) {
+        var res;
+        if (!r.ok) res = { ok: false, status: r.status, error: r.error, url: url, studies: [], total: 0 };
+        else {
+          var n = normalizeSearch(r.data);
+          res = n.recognized ? { ok: true, status: r.status, url: url, studies: n.studies, total: n.total, raw: n.raw, attempt: i }
+            : { ok: false, status: r.status, error: 'shape', url: url, studies: [], total: 0, keys: Object.keys(r.data || {}) };
+        }
+        if (res.ok) res.studies.sort(function (a, b) { return (a.external ? 1 : 0) - (b.external ? 1 : 0) || (b.release > a.release ? 1 : b.release < a.release ? -1 : 0); });
+        if (!last || res.ok) last = res;
+        if (res.ok && res.studies.some(function (s) { return !s.external; })) return res;
+        return run(i + 1);
+      });
+    }
+    return run(0);
   }
-
 
   function filesUrl(id) { return BASE + '/osdr/data/osd/files/' + idNumber(id); }
   var TABLE_EXT = /\.(csv|tsv|txt|xlsx|xls)$/i;
