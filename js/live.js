@@ -9,7 +9,10 @@
 (function (root) {
   'use strict';
 
-  var BASE = 'https://osdr.nasa.gov';
+  var DIRECT = 'https://osdr.nasa.gov';
+  var BASE = DIRECT; // can be replaced by a relay address (see worker/osdr-proxy.js) when the browser blocks direct calls
+  function setBase(u) { u = String(u || '').trim().replace(/\/+$/, ''); BASE = /^https:\/\/[^\s]+$/.test(u) ? u : DIRECT; return BASE; }
+  function getBase() { return BASE; }
 
   // topic tags found by keyword in title/description. A heuristic to help find health studies, not a classification of record.
   var TOPICS = {
@@ -42,8 +45,8 @@
     return BASE + '/osdr/data/search?' + q.join('&');
   }
   function metaUrl(id) { return BASE + '/osdr/data/osd/meta/' + idNumber(id); }
-  function studyPageUrl(id) { return BASE + '/osdr/data/osd/files/' + idNumber(id); }
-  function pageUrl(id) { return BASE + '/data/osd/' + idNumber(id); }
+  function studyPageUrl(id) { return DIRECT + '/osdr/data/osd/files/' + idNumber(id); }
+  function pageUrl(id) { return DIRECT + '/data/osd/' + idNumber(id); }
 
   function topicsOf(text) {
     var low = str(text).toLowerCase(), out = [];
@@ -128,7 +131,7 @@
     });
   }
 
-  var api = { BASE: BASE, TOPICS: TOPICS, searchUrl: searchUrl, metaUrl: metaUrl, pageUrl: pageUrl, studyPageUrl: studyPageUrl, idNumber: idNumber,
+  var api = { DIRECT: DIRECT, setBase: setBase, getBase: getBase, TOPICS: TOPICS, searchUrl: searchUrl, metaUrl: metaUrl, pageUrl: pageUrl, studyPageUrl: studyPageUrl, idNumber: idNumber,
     topicsOf: topicsOf, normalizeHit: normalizeHit, normalizeSearch: normalizeSearch, isHuman: isHuman, isSpaceflight: isSpaceflight,
     getJson: getJson, search: search, diagnose: diagnose };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Live = api;
