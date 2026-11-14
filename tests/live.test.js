@@ -16,6 +16,12 @@ const ES = { hits: { total: { value: 2 }, hits: [
     assert.strictEqual(L.metaUrl('OSD-575'), 'https://osdr.nasa.gov/osdr/data/osd/meta/575');
     assert.strictEqual(L.idNumber('OSD-12'), 12);
   });
+  await test('only OSD-<number> ids are studies; other databases are external and get no OSDR link', () => {
+    const r = L.normalizeSearch({ hits: [{ _source: { 'Study Identifier': 'GSE12345', 'Study Title': 'x' } }, { _source: { accession: 'PXD000001' } }, { id: '575' }] });
+    assert.deepStrictEqual(r.studies.map(s => [s.id, s.external]), [['GSE12345', true], ['PXD000001', true], ['OSD-575', false]]);
+    assert.strictEqual(L.pageUrl('GSE12345'), ''); assert.ok(L.pageUrl('OSD-575').endsWith('/OSD-575'));
+    assert.ok(r.raw.includes('GSE12345'));
+  });
   await test('relay address: used for API calls, study links stay on NASA, bad value falls back', () => {
     L.setBase('https://my-relay.example.workers.dev/');
     assert.strictEqual(L.metaUrl('OSD-575'), 'https://my-relay.example.workers.dev/osdr/data/osd/meta/575');
