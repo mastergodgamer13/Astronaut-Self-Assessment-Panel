@@ -22,6 +22,12 @@ const ES = { hits: { total: { value: 2 }, hits: [
     assert.strictEqual(L.pageUrl('GSE12345'), ''); assert.ok(L.pageUrl('OSD-575').endsWith('/OSD-575'));
     assert.ok(r.raw.includes('GSE12345'));
   });
+  await test('real NASA hit layout: Mission is an object, release date is epoch seconds, newest first', () => {
+    const r = L.normalizeSearch({ hits: { hits: [
+      { _source: { 'Study Identifier': 'OSD-1', Mission: { Name: 'Old' }, 'Study Public Release Date': 1512561600 } },
+      { _source: { 'Study Identifier': 'OSD-2', Mission: { Name: 'SpaceX Inspiration4' }, 'Study Public Release Date': 1717200000 } }] } });
+    assert.deepStrictEqual(r.studies.map(s => [s.mission, s.release]), [['Old', '2017-12-06'], ['SpaceX Inspiration4', '2024-06-01']]);
+  });
   await test('relay address: used for API calls, study links stay on NASA, bad value falls back', () => {
     L.setBase('https://my-relay.example.workers.dev/');
     assert.strictEqual(L.metaUrl('OSD-575'), 'https://my-relay.example.workers.dev/osdr/data/osd/meta/575');
@@ -42,25 +48,32 @@ const ES = { hits: { total: { value: 2 }, hits: [
   });
   await test('search: ok, http error, network error, unknown shape', async () => {
     const a = await L.search(ok(ES), { term: 'blood' }); assert.ok(a.ok); assert.strictEqual(a.studies.length, 2);
-    assert.ok(a.url.includes('ffield=organism'));
+    assert.ok(a.url.includes('ffield=organism') && a.url.includes('type=cgene') && a.url.includes('sort='));
     const h = await L.search(() => Promise.resolve({ ok: false, status: 503 }), {}); assert.deepStrictEqual([h.ok, h.error, h.status], [false, 'http', 503]);
     const nw = await L.search(() => Promise.reject(new Error('cors')), {}); assert.deepStrictEqual([nw.ok, nw.error], [false, 'network']);
     const sh = await L.search(ok({ foo: 1 }), {}); assert.deepStrictEqual([sh.ok, sh.error, sh.keys], [false, 'shape', ['foo']]);
     const all = await L.search(ok(ES), { human: false }); assert.ok(!all.url.includes('ffield'));
+    // OSDR has two sources; both are asked and merged, newest first, duplicates removed, other databases dropped
+    const calls = []; const mk = (id, ts) => ({ _source: { 'Study Identifier': id, 'Study Public Release Date': ts, 'Data Source Type': 'cgene' } });
+    const two = await L.search(u => { calls.push(u); return ok({ hits: { total: 2, hits: u.includes('type=alsda') ? [mk('OSD-2', 1717200000), mk('OSD-3', 1512561600)] : [mk('OSD-1', 1751241600), mk('OSD-3', 1512561600), { _source: { Accession: 'PXD1' } }] } })(); }, { term: 'x', page: 2, size: 10 });
+    assert.strictEqual(calls.length, 2); assert.ok(calls.every(u => u.includes('from=20&size=10'))); // from is an offset
+    assert.deepStrictEqual(two.studies.map(s => s.id), ['OSD-1', 'OSD-2', 'OSD-3']);
+    const half = await L.search(u => u.includes('type=cgene') ? Promise.reject(new Error('x')) : ok(ES)(), {});
+    assert.ok(half.ok && half.studies.length === 2); // one source failing does not hide the other
   });
   await test('diagnose: reports each call separately', async () => {
     const f = url => url.includes('/meta/') ? ok({ study: { 'OSD-575': {} } })() : ok(ES)();
     const d = await L.diagnose(f); assert.ok(d.ok && d.search.ok && d.meta.ok);
     const d2 = await L.diagnose(() => Promise.reject(new Error('x'))); assert.ok(!d2.ok); assert.strictEqual(d2.search.error, 'network');
   });
-  const META = { hits: 1, study: { 'OSD-575': { title: 'Serum panel', description: 'Blood glucose in crew', publicReleaseDate: '2023-01-01',
-      additionalInformation: { organisms: [{ organism: 'Homo sapiens' }], assays: [{ measurementType: 'clinical chemistry' }] }, factors: [{ name: 'Spaceflight' }] } },
-    studies: { 'OSD-575': { comments: [{ name: 'Mission Name', value: 'Inspiration4' }, { name: 'Project Type', value: 'Spaceflight Study' }] } } };
+  const META = { hits: 1, study: { 'OSD-575': { additionalInformation: { organisms: { links: { homosapiens: '<a>Homo sapiens</a>' } } },
+    studies: [{ title: 'Serum panel', description: 'Blood glucose in crew', publicReleaseDate: '14-May-2024',
+      assays: [{ measurementType: { annotationValue: 'Immunoassay' }, technologyType: { annotationValue: 'Multiplex' } }], factors: [{ factorName: 'Time' }, { factorName: 'Spaceflight' }] }] } } };
   const FILES = { studies: { 'OSD-575': { study_files: [
     { file_name: 'a.zip', remote_url: '/geode-py/ws/a.zip', file_size: 5 }, { file_name: 'cbc.csv', remote_url: '/geode-py/ws/cbc.csv', file_size: '120' } ] } } };
   await test('normalizeMeta / normalizeFiles: fields read, tables first, urls made absolute', () => {
     const m = L.normalizeMeta(META, 'OSD-575');
-    assert.deepStrictEqual([m.title, m.mission, m.projectType, m.organisms, m.assays, m.factors], ['Serum panel', 'Inspiration4', 'Spaceflight Study', ['Homo sapiens'], ['clinical chemistry'], ['Spaceflight']]);
+    assert.deepStrictEqual([m.title, m.release, m.assays, m.factors], ['Serum panel', '14-May-2024', ['Immunoassay (Multiplex)'], ['Time', 'Spaceflight']]);
     assert.ok(m.topics.includes('blood'));
     const f = L.normalizeFiles(FILES, 'OSD-575');
     assert.deepStrictEqual(f.map(x => x.name), ['cbc.csv', 'a.zip']); assert.ok(f[0].table && !f[1].table);

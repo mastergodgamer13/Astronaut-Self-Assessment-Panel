@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114k';
+    sc.src = 'js/osd635-genes.js?v=20261114m';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -633,7 +633,7 @@
     osdr.forEach(function (s) {
       var card = el('div', { class: 'ind' });
       card.appendChild(el('div', { class: 'ind-head' }, [el('div', null, [el('strong', { text: s.id }), ' ', s.title || t('lv.notitle')])]));
-      var meta = [s.organism, s.projectType, s.mission].filter(Boolean).join(' · ');
+      var meta = [s.organism, s.projectType, s.mission, s.release].filter(Boolean).join(' · ');
       if (meta) card.appendChild(el('div', { class: 'meta', text: meta }));
       if (s.topics.length) card.appendChild(el('div', { class: 'meta', text: s.topics.map(function (k) { return t('lv.topic.' + k); }).join(' · ') }));
       var det = el('button', { type: 'button', text: t(live.open === s.id ? 'lv.hide' : 'lv.details') });
