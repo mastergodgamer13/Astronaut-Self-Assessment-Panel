@@ -4,7 +4,7 @@ Continuation of *Astronot Self Check* (NASA Space Apps 2026). Goal of this repos
 
 ## Live NASA catalog (new)
 
-The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/osdr/data/search`, `/osdr/data/osd/meta/{id}`) from the browser: a connection check that reports what NASA answered, a search (human studies only by default) and a list of studies with keyword topic labels (blood, immune, metabolism, heart, bone/muscle, ...) and a link to each study. Code: `js/live.js` (pure, network injected, tests in `tests/live.test.js`). The response layout is read defensively and an unrecognised layout is reported, never guessed. Not yet built: loading a study's data tables and turning them into charts automatically.
+The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/osdr/data/search`, `/osdr/data/osd/meta/{id}`) from the browser: a connection check that reports what NASA answered, a search (human studies only by default) and a list of studies with keyword topic labels (blood, immune, metabolism, heart, bone/muscle, ...) and a link to each study. Code: `js/live.js` (pure, network injected, tests in `tests/live.test.js`). The response layout is read defensively and an unrecognised layout is reported, never guessed. Each study has a **Details** button: description, measurements, factors and the study's file list, with table files (csv/tsv/txt/xlsx) marked ▦. Not yet built: loading those tables and turning them into charts automatically.
 
 ## Live proxy (only if the browser blocks NASA)
 
