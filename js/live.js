@@ -116,57 +116,57 @@
   }
 
   /**
-   * Searches the catalog for OSDR studies. NASA's search also returns other databases (PRIDE, GEO, MG-RAST...), which have no OSDR page.
-   * Tries: OSDR-only (type=cgene) newest first -> OSDR-only -> no type (other databases filtered out here). First attempt with OSD studies wins.
-   * opts: { term, human (default true), page, size }
+   * Searches the catalog for OSDR studies. Confirmed against the live API: the search also returns other databases (PRIDE, ...)
+   * with no OSDR page; OSDR studies come from two sources, type=cgene (GeneLab) and type=alsda (ALSDA, which has human
+   * physiology studies), and one request cannot combine types (HTTP 400), so both are asked and merged, newest first.
+   * `from` is an item offset, not a page number. opts: { term, human (default true), page, size }
    */
   function search(fetchFn, opts) {
     opts = opts || {};
-    var filters = [];
+    var size = opts.size || 25, filters = [];
     if (opts.human !== false) filters.push(['organism', 'Homo sapiens']);
-    var base = { term: opts.term || '', from: opts.page || 0, size: opts.size || 25, filters: filters };
-    var attempts = [{ type: 'cgene', sort: 'Study Public Release Date' }, { type: 'cgene' }, {}];
-    var last = null;
-    function run(i) {
-      if (i >= attempts.length) return Promise.resolve(last);
-      var o = {}; Object.keys(base).forEach(function (k) { o[k] = base[k]; }); Object.keys(attempts[i]).forEach(function (k) { o[k] = attempts[i][k]; });
-      var url = searchUrl(o);
+    function one(type) {
+      var url = searchUrl({ term: opts.term || '', from: (opts.page || 0) * size, size: size, type: type, sort: 'Study Public Release Date', filters: filters });
       return getJson(fetchFn, url).then(function (r) {
-        var res;
-        if (!r.ok) res = { ok: false, status: r.status, error: r.error, url: url, studies: [], total: 0 };
-        else {
-          var n = normalizeSearch(r.data);
-          res = n.recognized ? { ok: true, status: r.status, url: url, studies: n.studies, total: n.total, raw: n.raw, attempt: i }
-            : { ok: false, status: r.status, error: 'shape', url: url, studies: [], total: 0, keys: Object.keys(r.data || {}) };
-        }
-        if (res.ok) res.studies.sort(function (a, b) { return (a.external ? 1 : 0) - (b.external ? 1 : 0) || (b.release > a.release ? 1 : b.release < a.release ? -1 : 0); });
-        if (!last || res.ok) last = res;
-        if (res.ok && res.studies.some(function (s) { return !s.external; })) return res;
-        return run(i + 1);
+        if (!r.ok) return { ok: false, status: r.status, error: r.error, url: url, studies: [], total: 0 };
+        var n = normalizeSearch(r.data);
+        return n.recognized ? { ok: true, status: r.status, url: url, studies: n.studies, total: n.total, raw: n.raw }
+          : { ok: false, status: r.status, error: 'shape', url: url, studies: [], total: 0, keys: Object.keys(r.data || {}) };
       });
     }
-    return run(0);
+    return Promise.all([one('cgene'), one('alsda')]).then(function (rs) {
+      var good = rs.filter(function (r) { return r.ok; });
+      if (!good.length) return rs[0];
+      var seen = {}, studies = [];
+      good.forEach(function (r) { r.studies.forEach(function (st) { if (!st.external && !seen[st.id]) { seen[st.id] = 1; studies.push(st); } }); });
+      studies.sort(function (a, b) { return b.release > a.release ? 1 : b.release < a.release ? -1 : 0; });
+      return { ok: true, status: good[0].status, url: good[0].url, studies: studies,
+        total: good.reduce(function (n, r) { return n + (typeof r.total === 'number' ? r.total : 0); }, 0), raw: good[0].raw };
+    });
   }
 
   function filesUrl(id) { return BASE + '/osdr/data/osd/files/' + idNumber(id); }
   var TABLE_EXT = /\.(csv|tsv|txt|xlsx|xls)$/i;
 
-  /** Study metadata response -> { id, title, description, release, organisms[], assays[], factors[], mission, projectType } (any missing part stays empty). */
+  /**
+   * Study metadata response -> { id, title, description, release, organisms[], assays[], factors[], topics }.
+   * Real layout (confirmed live): study['OSD-n'].studies[0] holds title, description, publicReleaseDate ('14-May-2024'),
+   * assays[].measurementType.annotationValue / technologyType.annotationValue and factors[].factorName.
+   */
   function normalizeMeta(r, id) {
-    var key = 'OSD-' + idNumber(id), st = (r && r.study && (r.study[key] || r.study[Object.keys(r.study)[0]])) || {};
-    var info = st.additionalInformation || {};
-    function names(a, f) { return (Array.isArray(a) ? a : []).map(function (x) { return str(typeof x === 'object' && x ? (x[f] || x.name || x.term || x.text || '') : x); }).filter(Boolean); }
-    var comments = (r && r.studies && r.studies[key] && r.studies[key].comments) || (r && r.studies && (r.studies[Object.keys(r.studies)[0]] || {}).comments) || [];
-    var cm = {};
-    (Array.isArray(comments) ? comments : []).forEach(function (c) { if (c && c.name) cm[c.name] = c.value; });
-    var assays = info.assays || st.assays;
+    var key = 'OSD-' + idNumber(id), root = (r && r.study && (r.study[key] || r.study[Object.keys(r.study)[0]])) || {};
+    var s0 = (Array.isArray(root.studies) && root.studies[0]) || root;
+    function ann(x) { return x && typeof x === 'object' ? str(x.annotationValue || x.term || x.name) : str(x); }
+    var assays = Array.isArray(s0.assays) ? s0.assays : [];
+    var info = root.additionalInformation || {};
+    var orgs = info.organisms && info.organisms.links ? Object.keys(info.organisms.links).map(function (k) { return k; }) : [];
+    var title = str(s0.title), desc = str(s0.description);
     return {
-      id: key, title: str(st.title), description: str(st.description), release: str(st.publicReleaseDate),
-      organisms: names(info.organisms, 'organism').length ? names(info.organisms, 'organism') : (Array.isArray(info.organisms) ? info.organisms.map(str) : []),
-      assays: Array.isArray(assays) ? assays.map(function (a) { return str(a.measurementType || a.technologyType || a.name || (typeof a === 'string' ? a : '')); }).filter(Boolean) : [],
-      factors: names(st.factors, 'name'),
-      mission: str(cm['Mission Name']), projectType: str(cm['Project Type']),
-      topics: topicsOf(str(st.title) + ' ' + str(st.description))
+      id: key, title: title, description: desc, release: str(s0.publicReleaseDate),
+      organisms: orgs,
+      assays: assays.map(function (a) { return ann(a.measurementType) + (a.technologyType ? ' (' + ann(a.technologyType) + ')' : ''); }).filter(function (x) { return x.trim(); }),
+      factors: (Array.isArray(s0.factors) ? s0.factors : []).map(function (f) { return str(f.factorName || f.name); }).filter(Boolean),
+      topics: topicsOf(title + ' ' + desc)
     };
   }
 
