@@ -16,6 +16,12 @@ const ES = { hits: { total: { value: 2 }, hits: [
     assert.strictEqual(L.metaUrl('OSD-575'), 'https://osdr.nasa.gov/osdr/data/osd/meta/575');
     assert.strictEqual(L.idNumber('OSD-12'), 12);
   });
+  await test('relay address: used for API calls, study links stay on NASA, bad value falls back', () => {
+    L.setBase('https://my-relay.example.workers.dev/');
+    assert.strictEqual(L.metaUrl('OSD-575'), 'https://my-relay.example.workers.dev/osdr/data/osd/meta/575');
+    assert.ok(L.pageUrl('OSD-575').startsWith('https://osdr.nasa.gov/'));
+    assert.strictEqual(L.setBase('javascript:alert(1)'), 'https://osdr.nasa.gov'); assert.strictEqual(L.setBase(''), 'https://osdr.nasa.gov');
+  });
   await test('normalizeSearch: elasticsearch-style hits, skips hits without id, tags topics', () => {
     const r = L.normalizeSearch(ES);
     assert.strictEqual(r.recognized, true); assert.strictEqual(r.total, 2); assert.strictEqual(r.studies.length, 2);

@@ -6,6 +6,10 @@ Continuation of *Astronot Self Check* (NASA Space Apps 2026). Goal of this repos
 
 The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/osdr/data/search`, `/osdr/data/osd/meta/{id}`) from the browser: a connection check that reports what NASA answered, a search (human studies only by default) and a list of studies with keyword topic labels (blood, immune, metabolism, heart, bone/muscle, ...) and a link to each study. Code: `js/live.js` (pure, network injected, tests in `tests/live.test.js`). The response layout is read defensively and an unrecognised layout is reported, never guessed. Not yet built: loading a study's data tables and turning them into charts automatically.
 
+## Live proxy (only if the browser blocks NASA)
+
+If **Check connection** says the browser blocked the request, NASA's server does not allow web pages to read its answers directly (CORS). Fix with a free Cloudflare Worker that relays read-only requests: (1) cloudflare.com → sign up (free) → Workers & Pages → Create → Worker; (2) open the editor, replace the code with the contents of `worker/osdr-proxy.js`, Deploy; (3) copy the address it gives (`https://<name>.<you>.workers.dev`) into the **Relay address** field of the Live NASA catalog tab. The Worker only relays GET requests under `/osdr/` and `/biodata/` and stores nothing.
+
 # Base project: Astronot Self Check
 
 Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for Astronauts on Space Missions"* (health monitoring).

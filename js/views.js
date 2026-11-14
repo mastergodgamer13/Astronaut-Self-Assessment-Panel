@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114g';
+    sc.src = 'js/osd635-genes.js?v=20261114h';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -537,7 +537,8 @@
   }
 
   /* ---------- Live NASA catalog (OSDR API, called from the browser) ---------- */
-  var live = { term: '', human: true, diag: null, res: null, busy: false };
+  var live = { term: '', human: true, diag: null, res: null, busy: false, proxy: '' };
+  try { live.proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { live.proxy = ''; }
 
   function renderLive(ctx, box) {
     var t = ctx.t, L = ctx.Live;
@@ -546,6 +547,7 @@
     box.appendChild(el('div', { class: 'badge real', text: t('lv.badge') }));
     box.appendChild(el('p', { class: 'msg', text: t('lv.what') }));
     function again() { renderLive(ctx, box); }
+    L.setBase(live.proxy);
     var fetchFn = function (u) { return window.fetch(u); };
 
     // 1. connection check
@@ -564,6 +566,17 @@
       box.appendChild(ul);
       box.appendChild(el('p', { class: 'msg', text: d.ok ? t('lv.diag.good') : t('lv.diag.bad') }));
     }
+
+    // proxy address (only needed when the browser blocks direct calls); kept in this browser only
+    var pf = el('div', { class: 'msg' });
+    var pin = el('input', { type: 'url', name: 'proxy', value: live.proxy, placeholder: 'https://....workers.dev', 'aria-label': t('lv.proxy') });
+    pin.addEventListener('change', function () {
+      live.proxy = pin.value.trim(); L.setBase(live.proxy);
+      try { window.localStorage.setItem('ll_proxy', live.proxy); } catch (e) { /* storage can be unavailable */ }
+    });
+    pf.appendChild(el('label', null, [el('span', { text: t('lv.proxy') }), pin]));
+    pf.appendChild(el('small', { class: 'meta', text: t('lv.proxy.hint') }));
+    box.appendChild(pf);
 
     // 2. search
     var f = el('form', { novalidate: 'novalidate' });
