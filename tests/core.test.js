@@ -102,13 +102,15 @@ test('simulated demo entries pass validation', function () {
   });
 });
 
-test('demo scenario: sleep, heart rate, mood drift are detected; stable indicators are not', function () {
+test('demo scenario: sleep, heart rate, mood, blood pressure drift and the final fever are detected; glucose and diastolic stay green', function () {
   var a = Core.assess(Demo.generate(2026, 30));
   assert.strictEqual(a.per.sleep.status, 'attention');
   assert.strictEqual(a.per.hr.status, 'attention');
   assert.ok(['watch', 'attention'].indexOf(a.per.mood.status) >= 0);
-  assert.notStrictEqual(a.per.glucose.status, 'attention');
-  assert.notStrictEqual(a.per.temp.status, 'attention');
+  assert.strictEqual(a.per.sys.status, 'watch');
+  assert.strictEqual(a.per.temp.status, 'attention');
+  assert.strictEqual(a.per.glucose.status, 'ok');
+  assert.strictEqual(a.per.dia.status, 'ok');
 });
 
 test('assess on empty data: every indicator nodata, overall nodata', function () {
