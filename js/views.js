@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261115a';
+    sc.src = 'js/osd635-genes.js?v=20261115b';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -681,6 +681,7 @@
     if (!wiz.checked[q.id] || !p.ok) return;
     if (p.skipped) { box.appendChild(el('p', { class: 'msg', text: t('cu.nodata') })); return; }
     var ev = C.evaluate(q, p.value), acts = C.advice(q, ev);
+    if (ev.baselineOnly) { box.appendChild(el('p', { class: 'msg', text: t('cu.baseline') })); return; }
     box.appendChild(el('div', null, [ctx.chip(ev.status)]));
     box.appendChild(el('p', { class: 'msg', text: ev.status === 'ok' ? t('cu.okmsg') : t('msg.' + ev.status) }));
     var z = C.zonesOf(q);
@@ -692,6 +693,33 @@
       box.appendChild(ol);
     }
     if (q.kind === 'lab' || q.id === 'glucose') box.appendChild(crewBlock(ctx, q)); // real crew data exists only for these measurements
+  }
+
+  /** 5-trial tap reaction test; writes the median (ms) into the answer input. */
+  function reactionTest(ctx, inp) {
+    var t = ctx.t, trials = [], timer = null, startAt = 0, state = 'idle';
+    var wrap = el('div', { class: 'callout rt' });
+    var pad = el('button', { type: 'button', class: 'rt-pad', text: t('cu.rt.start') });
+    var info = el('p', { class: 'meta', 'aria-live': 'polite', text: t('cu.rt.intro') });
+    wrap.appendChild(el('strong', { text: t('cu.rt.title') })); wrap.appendChild(info); wrap.appendChild(pad);
+    function arm() {
+      state = 'wait'; pad.className = 'rt-pad wait'; pad.textContent = t('cu.rt.wait');
+      timer = setTimeout(function () { state = 'go'; startAt = Date.now(); pad.className = 'rt-pad go'; pad.textContent = t('cu.rt.go'); }, 1200 + Math.random() * 2500);
+    }
+    pad.addEventListener('click', function () {
+      if (state === 'idle') { trials = []; arm(); return; }
+      if (state === 'wait') { clearTimeout(timer); info.textContent = t('cu.rt.early'); arm(); return; }
+      if (state === 'go') {
+        var ms = Date.now() - startAt; trials.push(ms);
+        info.textContent = t('cu.rt.trial', { n: trials.length, ms: ms });
+        if (trials.length < 5) { arm(); return; }
+        state = 'idle'; pad.className = 'rt-pad'; pad.textContent = t('cu.rt.again');
+        var m = ctx.Checkup.reactionMedian(trials);
+        info.textContent = t('cu.rt.done', { ms: m });
+        if (m !== null) inp.value = String(m);
+      }
+    });
+    return wrap;
   }
 
   function renderCheckup(ctx, box, hooks) {
@@ -722,6 +750,7 @@
     if (wiz.i >= N) { renderWizResult(ctx, box, hooks, go, reset); return; }
 
     var q = C.QUESTIONS[wiz.i], slide = el('form', { class: 'slide', novalidate: 'novalidate' });
+    if (q.organ) slide.appendChild(el('div', { class: 'meta organ-tag', text: t('region.' + q.organ + '.title') }));
     slide.appendChild(el('h3', { tabindex: '-1', text: q.kind === 'vital' || q.kind === 'lab' ? wizLabel(ctx, q) : t('cu.q.' + q.id + '.ask') }));
     if (q.kind === 'vital' || q.kind === 'lab') slide.appendChild(el('p', { class: 'msg', text: t('cu.enter', { what: wizLabel(ctx, q) }) }));
     slide.appendChild(el('p', { class: 'meta', text: q.kind === 'vital' ? t('info.' + q.id + '.how') : q.kind === 'lab' ? t('cu.optional') : t('cu.q.' + q.id + '.help') }));
@@ -742,6 +771,7 @@
       if (cur !== undefined && cur !== '') inp.value = String(cur);
       slide.appendChild(el('label', null, [inp, ' ', el('span', { text: L.unit })]));
       read = function () { return inp.value; };
+      if (q.id === 'reaction') slide.appendChild(reactionTest(ctx, inp));
     }
     var errBox = el('p', { class: 'form-msg err', role: 'alert', text: wiz.err });
     slide.appendChild(errBox);

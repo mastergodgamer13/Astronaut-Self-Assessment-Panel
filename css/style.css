@@ -185,3 +185,7 @@ h2 { font-size: .8rem; letter-spacing: .06em; color: var(--muted); font-weight: 
 .act-red { color: var(--attention); font-weight: 700; }
 .wiz-item { margin: .35rem 0; padding: .3rem .5rem; border: 1px solid var(--line); border-radius: 8px; }
 .wiz-item summary { cursor: pointer; }
+.organ-tag { text-transform: uppercase; letter-spacing: .06em; }
+.rt-pad { display: block; width: 100%; min-height: 84px; margin: 8px 0; font-size: 1.1rem; border-radius: 10px; border: 2px solid var(--line); cursor: pointer; }
+.rt-pad.wait { background: #5a2a2a; color: #fff; }
+.rt-pad.go { background: #1f9d55; color: #fff; }
