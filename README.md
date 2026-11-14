@@ -10,6 +10,10 @@ The **Guided check-up** tab (now the first tab) asks 15 questions, one per slide
 
 **Not built yet:** loading crew values live from NASA's data files (the slides use the verified copies of OSD-569/OSD-575 bundled in the app; live file loading needs the relay update), and every wording of the zones and actions still needs flight-surgeon review.
 
+## Bone and muscle indicator (new)
+
+The Bones & muscle region now has two daily indicators: **exercise minutes** (zones: green from 60 min, yellow below; never red, because rest days are normal; NASA says crews average about two hours a day, scheduled 2.5 h six days a week) and **grip strength** (kg; no fixed zones because normal depends on sex, age and device, so it is judged only against your own first 7 readings). Both are in the daily check-in and the guided check-up (exercise) and feed the region chip and the overall counts (12 indicators). Bone density itself cannot be measured at home; these are indirect signs. Prototype values, to be reviewed by a flight surgeon.
+
 ## Live NASA catalog (new)
 
 The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/osdr/data/search`, `/osdr/data/osd/meta/{id}`) from the browser: a connection check that reports what NASA answered, a search (human studies only by default) and a list of studies with keyword topic labels (blood, immune, metabolism, heart, bone/muscle, ...) and a link to each study. Code: `js/live.js` (pure, network injected, tests in `tests/live.test.js`). The response layout is read defensively and an unrecognised layout is reported, never guessed. Each study has a **Details** button: description, measurements, factors and the study's file list, with table files (csv/tsv/txt/xlsx) marked ▦. Not yet built: loading those tables and turning them into charts automatically.

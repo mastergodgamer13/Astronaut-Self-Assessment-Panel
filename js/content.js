@@ -20,7 +20,7 @@
     heart:      { indicators: ['hr', 'sys', 'dia'], hazards: ['gravity'] },
     metabolism: { indicators: ['glucose'],         hazards: ['nutrition'] },
     whole:      { indicators: ['temp'],            hazards: ['closed'] },
-    bones:      { indicators: [],                  hazards: ['gravity'] },
+    bones:      { indicators: ['exercise', 'grip'], hazards: ['gravity'] },
     immune:     { indicators: [],                  hazards: ['radiation', 'isolation'], own: ['wbc', 'neut', 'lymph'], osdr: ['wbc', 'neut', 'lymph'] }
   };
 

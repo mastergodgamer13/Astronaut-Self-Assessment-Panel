@@ -27,7 +27,9 @@
     { id: 'glucose', label: 'Blood glucose',        unit: 'mg/dL', min: 10,  max: 800, step: 1,   region: 'metabolism' },
     { id: 'temp',    label: 'Body temperature',     unit: '°C',    min: 25,  max: 45,  step: 0.1, region: 'whole' },
     { id: 'sleep',   label: 'Sleep duration',       unit: 'h',     min: 0,   max: 24,  step: 0.1, region: 'mind' },
-    { id: 'mood',    label: 'Mood (self-rating 1–5)', unit: 'pts', min: 1,   max: 5,   step: 1,   region: 'mind', integer: true }
+    { id: 'mood',    label: 'Mood (self-rating 1–5)', unit: 'pts', min: 1,   max: 5,   step: 1,   region: 'mind', integer: true },
+    { id: 'exercise', label: 'Exercise today',      unit: 'min',   min: 0,   max: 600, step: 1,   region: 'bones', integer: true },
+    { id: 'grip',    label: 'Grip strength',        unit: 'kg',    min: 1,   max: 120, step: 0.5, region: 'bones', baselineOnly: true } // no absolute zones: depends on sex, age, device
   ];
 
 
@@ -43,7 +45,10 @@
     glucose: { ok: [70, 140],   watch: [55, 199] },
     temp:    { ok: [36.1, 37.5], watch: [35.0, 38.4] },
     sleep:   { ok: [6, 9.5],    watch: [4, 11] },
-    mood:    { ok: [3, 5],      watch: [2, 5] }
+    mood:    { ok: [3, 5],      watch: [2, 5] },
+    // NASA: crews now average about two hours of exercise a day (scheduled 2.5 h, six days a week). Below 60 min is yellow; no red
+    // (rest days are normal). Grip strength has no absolute zones: it is judged against the person's own baseline only.
+    exercise: { ok: [60, 600],  watch: [0, 600] }
   };
 
   /** Zone of one value against a {ok:[lo,hi], watch:[lo,hi]} reference: 'ok' | 'watch' | 'attention'. */

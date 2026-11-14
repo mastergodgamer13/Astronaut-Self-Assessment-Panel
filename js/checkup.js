@@ -14,7 +14,7 @@
   // kind: vital (number, zones from Core.REFERENCE) | symptom (0-3) | redflag (yes/no) | lab (number, zones from Immune.REFERENCE, optional)
   var QUESTIONS = [
     { id: 'hr', kind: 'vital' }, { id: 'sys', kind: 'vital' }, { id: 'dia', kind: 'vital' }, { id: 'glucose', kind: 'vital' },
-    { id: 'temp', kind: 'vital' }, { id: 'sleep', kind: 'vital' }, { id: 'mood', kind: 'vital' },
+    { id: 'temp', kind: 'vital' }, { id: 'sleep', kind: 'vital' }, { id: 'mood', kind: 'vital' }, { id: 'exercise', kind: 'vital' },
     { id: 'fatigue', kind: 'symptom' }, { id: 'dizzy', kind: 'symptom' }, { id: 'vision', kind: 'symptom' }, { id: 'pain', kind: 'symptom' },
     { id: 'emergency', kind: 'redflag' },
     { id: 'wbc', kind: 'lab' }, { id: 'neut', kind: 'lab' }, { id: 'lymph', kind: 'lab' }
@@ -29,6 +29,7 @@
     temp:    { high: ['coolCabin', 'hydrate', 'rest', 'remeasure'], low: ['warm', 'remeasure', 'tellCrew'] },
     sleep:   { low: ['sleepSchedule', 'dimLight', 'noCaffeine', 'relax'], high: ['sleepSchedule', 'tellCrew'] },
     mood:    { low: ['talk', 'exercise', 'sleepSchedule', 'dailyLog'] },
+    exercise: { low: ['exercise', 'stretch', 'nutrition', 'dailyLog'] },
     fatigue: { any: ['sleepSchedule', 'exercise', 'nutrition', 'hydrate'] },
     dizzy:   { any: ['sitDown', 'slowPosture', 'hydrate', 'tellCrew'] },
     vision:  { any: ['logVision', 'eyeTest', 'tellCrew'] },
