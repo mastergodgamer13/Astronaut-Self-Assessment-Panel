@@ -46,7 +46,8 @@
   }
   function metaUrl(id) { return BASE + '/osdr/data/osd/meta/' + idNumber(id); }
   function studyPageUrl(id) { return DIRECT + '/osdr/data/osd/files/' + idNumber(id); }
-  function pageUrl(id) { return DIRECT + '/data/osd/' + idNumber(id); }
+  // human-readable study page on the OSDR website (repository root: https://osdr.nasa.gov/bio/repo)
+  function pageUrl(id) { return DIRECT + '/bio/repo/data/studies/OSD-' + idNumber(id); }
 
   function topicsOf(text) {
     var low = str(text).toLowerCase(), out = [];
