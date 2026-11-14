@@ -26,7 +26,7 @@
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
-  /** 30 fictional mission days. Drifts start on day 14 (sleep), 18 (heart rate), 20 (mood). */
+  /** 30 fictional mission days. Drifts start on day 14 (sleep), 18 (heart rate), 20 (mood), 22 (blood pressure); fever on the last two days. */
   function generate(seed, days) {
     days = days || 30;
     var rand = mulberry32(seed || 2026);
@@ -37,7 +37,8 @@
       var hrDrift = d >= 18 ? 0.5 * (d - 17) : 0;
       var moodDrift = d >= 20 ? -0.06 * (d - 19) : 0;
       var mood = Math.round(Math.min(5, Math.max(1, 4 + moodDrift + g() * 0.5)));
-      var sys = Math.round(118 + g() * 4);
+      var sysDrift = d >= 22 ? 2.2 * (d - 21) : 0;
+      var sys = Math.round(118 + sysDrift + g() * 4);
       var dia = Math.round(76 + g() * 3);
       out.push({
         date: '2030-03-' + pad(d),   // fictional calendar; labelled "Mission day" in the UI
@@ -46,7 +47,7 @@
         sys: sys,
         dia: Math.min(dia, sys - 20),
         glucose: Math.round(92 + g() * 5),
-        temp: Math.round((36.6 + g() * 0.2) * 10) / 10,
+        temp: Math.round((36.6 + (d >= days - 1 ? 2.0 : 0) + g() * 0.2) * 10) / 10,
         sleep: Math.round(Math.max(0, 7.2 + sleepDrift + g() * 0.4) * 10) / 10,
         mood: mood
       });
@@ -54,6 +55,11 @@
     return out;
   }
 
-  var api = { generate: generate };
+  /** Answers of the FICTIONAL guided-demo astronaut (made-up values): mostly green, several yellow, one red (temperature). */
+  function guided() {
+    return { hr: 72, sys: 138, dia: 82, glucose: 118, temp: 38.6, sleep: 5.2, mood: 2, fatigue: 2, dizzy: 1, vision: 1, pain: 1, emergency: 'no', wbc: 11.8, neut: 5200, lymph: '' };
+  }
+
+  var api = { generate: generate, guided: guided };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Demo = api;
 })(typeof window !== 'undefined' ? window : globalThis);

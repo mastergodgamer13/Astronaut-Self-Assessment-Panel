@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114m';
+    sc.src = 'js/osd635-genes.js?v=20261114o';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -650,5 +650,151 @@
     box.appendChild(el('p', { class: 'msg', text: t('lv.note') }));
   }
 
-  root.Views = { renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+  /* ---------- Guided check-up: one question per slide ---------- */
+  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '' };
+
+  function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
+
+  function wizValueText(ctx, item) {
+    var t = ctx.t, q = item.q;
+    if (item.value === null) return '—';
+    if (q.kind === 'symptom') return t('cu.sev.' + item.value);
+    if (q.kind === 'redflag') return t(item.value === 'yes' ? 'cu.yes' : 'cu.no');
+    return item.value + ' ' + ctx.Checkup.limits(q).unit;
+  }
+
+  function crewBlock(ctx, q) {
+    var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '';
+    if (q.kind === 'lab') { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
+    else if (q.id === 'glucose') { src = 'OSD-575'; r = C.crewRange(ctx.Osdr.CREW, q.id, ctx.Osdr.PRE); unit = ctx.Osdr.ANALYTES.glucose ? ctx.Osdr.ANALYTES.glucose.unit : 'mg/dL'; }
+    var box = el('div', { class: 'callout' });
+    box.appendChild(el('strong', { text: t('cu.crew.title') }));
+    if (!r) { box.appendChild(el('p', { class: 'meta', text: t('cu.crew.none') })); return box; }
+    var f = function (a) { return a ? a[0] + '–' + a[1] : '—'; };
+    box.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: src, n: r.n, pre: f(r.pre), post: f(r.post), unit: unit }) }));
+    return box;
+  }
+
+  function wizFeedback(ctx, q, box) {
+    var t = ctx.t, C = ctx.Checkup, raw = wiz.answers[q.id], p = C.parse(q, raw);
+    box.innerHTML = '';
+    if (!wiz.checked[q.id] || !p.ok) return;
+    if (p.skipped) { box.appendChild(el('p', { class: 'msg', text: t('cu.nodata') })); return; }
+    var ev = C.evaluate(q, p.value), acts = C.advice(q, ev);
+    box.appendChild(el('div', null, [ctx.chip(ev.status)]));
+    box.appendChild(el('p', { class: 'msg', text: ev.status === 'ok' ? t('cu.okmsg') : t('msg.' + ev.status) }));
+    var z = C.zonesOf(q);
+    if (z) box.appendChild(el('div', { class: 'meta', text: t('ref.line', { oklo: z.ok[0], okhi: z.ok[1], wlo: z.watch[0], whi: z.watch[1], unit: C.limits(q).unit }) }));
+    if (acts.length) {
+      box.appendChild(el('strong', { text: t('cu.actions') }));
+      var ol = el('ol', { class: 'msg' });
+      acts.forEach(function (a) { ol.appendChild(el('li', { class: a === 'callSurgeon' ? 'act-red' : '', text: t('act.' + a) })); });
+      box.appendChild(ol);
+    }
+    if (q.kind === 'lab' || q.id === 'glucose') box.appendChild(crewBlock(ctx, q)); // real crew data exists only for these measurements
+  }
+
+  function renderCheckup(ctx, box, hooks) {
+    var t = ctx.t, C = ctx.Checkup, N = C.QUESTIONS.length;
+    box.innerHTML = '';
+    function go(i) { wiz.i = i; wiz.err = ''; renderCheckup(ctx, box, hooks); var h = box.querySelector('h3'); if (h) h.focus(); }
+    function reset(demo) { wiz.answers = demo ? ctx.Demo.guided() : {}; wiz.checked = {}; wiz.demo = demo; wiz.saveMsg = ''; go(0); }
+
+    box.appendChild(el('h2', { text: t('cu.title') }));
+    if (wiz.demo && wiz.i >= 0) box.appendChild(el('div', { class: 'badge sim', text: t('cu.demoBadge') }));
+
+    if (wiz.i < 0) {
+      box.appendChild(el('p', { class: 'msg', text: t('cu.intro') }));
+      box.appendChild(el('div', { class: 'callout', text: t('cu.disclaimer') }));
+      var b1 = el('button', { type: 'button', text: t('cu.startOwn') }), b2 = el('button', { type: 'button', text: t('cu.startDemo') });
+      b1.addEventListener('click', function () { reset(false); }); b2.addEventListener('click', function () { reset(true); });
+      box.appendChild(b1); box.appendChild(document.createTextNode(' ')); box.appendChild(b2);
+      return;
+    }
+
+    // progress
+    var pct = Math.round(Math.min(wiz.i, N) / N * 100);
+    box.appendChild(el('div', { class: 'meta', text: wiz.i < N ? t('cu.progress', { n: wiz.i + 1, total: N }) : t('cu.result.title') }));
+    var bar = el('div', { class: 'wiz-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, [el('span', { style: 'width:' + pct + '%' })]);
+    box.appendChild(bar);
+    if (wiz.demo) box.appendChild(el('div', { class: 'meta', text: t('cu.demoNote') }));
+
+    if (wiz.i >= N) { renderWizResult(ctx, box, hooks, go, reset); return; }
+
+    var q = C.QUESTIONS[wiz.i], slide = el('form', { class: 'slide', novalidate: 'novalidate' });
+    slide.appendChild(el('h3', { tabindex: '-1', text: q.kind === 'vital' || q.kind === 'lab' ? wizLabel(ctx, q) : t('cu.q.' + q.id + '.ask') }));
+    if (q.kind === 'vital' || q.kind === 'lab') slide.appendChild(el('p', { class: 'msg', text: t('cu.enter', { what: wizLabel(ctx, q) }) }));
+    slide.appendChild(el('p', { class: 'meta', text: q.kind === 'vital' ? t('info.' + q.id + '.how') : q.kind === 'lab' ? t('cu.optional') : t('cu.q.' + q.id + '.help') }));
+
+    var read;
+    var cur = wiz.answers[q.id];
+    if (q.kind === 'symptom' || q.kind === 'redflag') {
+      var opts = q.kind === 'symptom' ? [0, 1, 2, 3] : ['no', 'yes'], fs = el('fieldset', { class: 'opts' }, [el('legend', { text: t('cu.q.' + q.id + '.ask') })]);
+      opts.forEach(function (o) {
+        var r = el('input', { type: 'radio', name: 'ans', value: String(o) });
+        if (cur !== undefined && cur !== '' && String(cur) === String(o)) r.checked = true;
+        fs.appendChild(el('label', null, [r, ' ', q.kind === 'symptom' ? t('cu.sev.' + o) : t(o === 'yes' ? 'cu.yes' : 'cu.no')]));
+      });
+      slide.appendChild(fs);
+      read = function () { var c = slide.querySelector('input[name=ans]:checked'); return c ? c.value : ''; };
+    } else {
+      var L = C.limits(q), inp = el('input', { type: 'number', name: 'ans', inputmode: 'decimal', step: String(L.step), min: String(L.min), max: String(L.max), 'aria-label': wizLabel(ctx, q) });
+      if (cur !== undefined && cur !== '') inp.value = String(cur);
+      slide.appendChild(el('label', null, [inp, ' ', el('span', { text: L.unit })]));
+      read = function () { return inp.value; };
+    }
+    var errBox = el('p', { class: 'form-msg err', role: 'alert', text: wiz.err });
+    slide.appendChild(errBox);
+    var fb = el('div', { class: 'wiz-fb', 'aria-live': 'polite' });
+    slide.appendChild(fb); wizFeedback(ctx, q, fb);
+
+    var back = el('button', { type: 'button', text: t('cu.back') }); back.disabled = wiz.i === 0;
+    var skip = el('button', { type: 'button', text: t('cu.skip') });
+    var main = el('button', { type: 'submit', text: t(wiz.checked[q.id] ? (wiz.i === N - 1 ? 'cu.review' : 'cu.next') : 'cu.check') });
+    back.addEventListener('click', function () { go(wiz.i - 1); });
+    skip.addEventListener('click', function () { wiz.answers[q.id] = ''; wiz.checked[q.id] = true; go(wiz.i + 1); });
+    slide.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      if (wiz.checked[q.id] && String(read()) === String(wiz.answers[q.id] === undefined ? '' : wiz.answers[q.id])) { go(wiz.i + 1); return; }
+      var raw = read(), p = C.parse(q, raw);
+      if (p.ok && p.skipped) { errBox.textContent = ''; wiz.answers[q.id] = ''; wiz.checked[q.id] = true; go(wiz.i + 1); return; }
+      if (!p.ok) { wiz.err = t('cu.err.' + p.code, { min: p.min, max: p.max }); errBox.textContent = wiz.err; return; }
+      wiz.err = ''; errBox.textContent = ''; wiz.answers[q.id] = raw; wiz.checked[q.id] = true;
+      wizFeedback(ctx, q, fb); main.textContent = t(wiz.i === N - 1 ? 'cu.review' : 'cu.next'); main.focus();
+    });
+    var nav = el('div', { class: 'wiz-nav' }, [back, skip, main]);
+    slide.appendChild(nav);
+    box.appendChild(slide);
+    var first = slide.querySelector('input'); if (first && !wiz.checked[q.id]) first.focus();
+  }
+
+  function renderWizResult(ctx, box, hooks, go, reset) {
+    var t = ctx.t, C = ctx.Checkup, run = C.run(wiz.answers), slide = el('div', { class: 'slide' });
+    slide.appendChild(el('h3', { tabindex: '-1', text: t('cu.result.title') }));
+    slide.appendChild(el('div', null, [ctx.chip(run.overall)]));
+    slide.appendChild(el('p', { class: 'msg', text: t('cu.result.counts', run.counts) }));
+    slide.appendChild(el('p', { class: 'msg', text: run.overall === 'attention' ? t('cu.result.red') : run.overall === 'watch' ? t('cu.result.yellow') : run.overall === 'ok' ? t('cu.result.allok') : t('cu.nodata') }));
+    slide.appendChild(el('strong', { text: t('cu.list') }));
+    run.sorted.forEach(function (it) {
+      var d = el('details', { class: 'wiz-item' });
+      if (it.status === 'attention' || it.status === 'watch') d.setAttribute('open', 'open');
+      d.appendChild(el('summary', null, [ctx.chip(it.status), ' ', wizLabel(ctx, it.q), ': ', wizValueText(ctx, it)]));
+      if (it.actions.length) { var ol = el('ol', { class: 'msg' }); it.actions.forEach(function (a) { ol.appendChild(el('li', { class: a === 'callSurgeon' ? 'act-red' : '', text: t('act.' + a) })); }); d.appendChild(ol); }
+      else d.appendChild(el('p', { class: 'meta', text: it.status === 'ok' ? t('cu.okmsg') : t('cu.nodata') }));
+      slide.appendChild(d);
+    });
+    var msg = el('p', { class: 'form-msg', 'aria-live': 'polite', text: wiz.saveMsg });
+    var save = el('button', { type: 'button', text: t('cu.save') }), again = el('button', { type: 'button', text: t('cu.again') }), back = el('button', { type: 'button', text: t('cu.back') });
+    save.addEventListener('click', function () {
+      if (wiz.demo) { wiz.saveMsg = t('cu.nosave.demo'); msg.className = 'form-msg err'; msg.textContent = wiz.saveMsg; return; }
+      var r = hooks.save(wiz.answers); wiz.saveMsg = t(r.key, { date: r.date });
+      msg.className = 'form-msg ' + (r.ok ? 'good' : 'err'); msg.textContent = wiz.saveMsg;
+    });
+    again.addEventListener('click', function () { wiz.i = -1; wiz.demo = false; renderCheckup(ctx, box, hooks); });
+    back.addEventListener('click', function () { go(ctx.Checkup.QUESTIONS.length - 1); });
+    slide.appendChild(msg); slide.appendChild(el('div', { class: 'wiz-nav' }, [back, save, again]));
+    box.appendChild(slide);
+  }
+
+  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

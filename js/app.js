@@ -5,7 +5,7 @@
   var ICON = { ok: '✓', watch: '!', attention: '▲', nodata: '–' };
   var t = I18n.t;
 
-  var state = { tab: 'dash', mode: 'demo', region: null, demo: Demo.generate(2026, 30) };
+  var state = { tab: 'checkup', mode: 'demo', region: null, demo: Demo.generate(2026, 30) };
   var store = null; // created in init(), after the language is known
 
   // localStorage that never throws (blocked storage -> data lives in memory for this page view)
@@ -94,6 +94,17 @@
       c.appendChild(t);
     });
     return svg;
+  }
+
+  // saves the vital answers of the guided check-up as today's check-in of the selected user
+  function saveCheckup(answers) {
+    if (!store.current()) { var r = store.add('Astronaut'); if (!r || !r.ok) return { ok: false, key: 'users.needUser' }; } // first save creates a default user
+    var d = new Date(), pad = function (n) { return (n < 10 ? '0' : '') + n; };
+    var date = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    var entry = Checkup.toEntry(answers, date);
+    if (!entry) return { ok: false, key: 'cu.nosave.vitals' };
+    store.saveEntry(store.current(), entry); render();
+    return { ok: true, key: 'cu.saved', date: date };
   }
 
   /* ---------- rendering ---------- */
@@ -205,7 +216,7 @@
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 
@@ -214,7 +225,7 @@
       var on = b.getAttribute('data-tab') === state.tab;
       b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on));
     });
-    ['dash', 'compare', 'osdr', 'live'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
+    ['checkup', 'dash', 'compare', 'osdr', 'live'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
   }
 
   function render() {
@@ -229,6 +240,7 @@
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
     if (state.tab === 'osdr') Views.renderOsdr(ctx(), $('osdr'));
+    if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup }); }
     if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }
 

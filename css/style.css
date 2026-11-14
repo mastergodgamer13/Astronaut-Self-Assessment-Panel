@@ -171,3 +171,17 @@ h2 { font-size: .8rem; letter-spacing: .06em; color: var(--muted); font-weight: 
   .rail-right .detail { position: static; }
 }
 @media (max-width: 700px) { .console { grid-template-columns: 1fr; padding: .75rem; } }
+
+/* guided check-up */
+.slide { margin: .6rem 0; padding: .8rem 1rem; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; }
+.slide h3 { margin: 0 0 .4rem; font-size: 1.15rem; outline: none; }
+.wiz-bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin: .3rem 0 .6rem; }
+.wiz-bar span { display: block; height: 100%; background: var(--ok); }
+.wiz-nav { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+.opts { border: 0; padding: 0; margin: .4rem 0; display: flex; gap: .6rem; flex-wrap: wrap; }
+.opts legend { position: absolute; left: -9999px; }
+.opts label { padding: .35rem .7rem; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.wiz-fb { margin-top: .6rem; }
+.act-red { color: var(--attention); font-weight: 700; }
+.wiz-item { margin: .35rem 0; padding: .3rem .5rem; border: 1px solid var(--line); border-radius: 8px; }
+.wiz-item summary { cursor: pointer; }
