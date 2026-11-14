@@ -205,7 +205,7 @@
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 
@@ -214,7 +214,7 @@
       var on = b.getAttribute('data-tab') === state.tab;
       b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on));
     });
-    ['dash', 'compare', 'osdr'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
+    ['dash', 'compare', 'osdr', 'live'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
   }
 
   function render() {
@@ -229,6 +229,7 @@
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
     if (state.tab === 'osdr') Views.renderOsdr(ctx(), $('osdr'));
+    if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }
 
   /* ---------- users ---------- */
