@@ -26,17 +26,20 @@
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
-  /** 30 fictional mission days. Drifts start on day 14 (sleep), 18 (heart rate), 20 (mood), 22 (blood pressure); fever on the last two days. */
+  /** 30 fictional mission days. Drifts start on day 14 (sleep), 18 (heart rate), 20 (mood), 22 (blood pressure); fever on the last two days; exercise drops from day 23 and grip strength slips from day 22. */
   function generate(seed, days) {
     days = days || 30;
     var rand = mulberry32(seed || 2026);
     var g = makeGauss(rand);
+    var g2 = makeGauss(mulberry32((seed || 2026) + 99)); // separate stream so the older indicators keep their values
     var out = [];
     for (var d = 1; d <= days; d++) {
       var sleepDrift = d >= 14 ? -0.12 * (d - 13) : 0;
       var hrDrift = d >= 18 ? 0.5 * (d - 17) : 0;
       var moodDrift = d >= 20 ? -0.06 * (d - 19) : 0;
       var mood = Math.round(Math.min(5, Math.max(1, 4 + moodDrift + g() * 0.5)));
+      var exDrift = d >= 23 ? -9 * (d - 22) : 0;
+      var gripDrift = d >= 22 ? -0.45 * (d - 21) : 0;
       var sysDrift = d >= 22 ? 2.2 * (d - 21) : 0;
       var sys = Math.round(118 + sysDrift + g() * 4);
       var dia = Math.round(76 + g() * 3);
@@ -49,7 +52,9 @@
         glucose: Math.round(92 + g() * 5),
         temp: Math.round((36.6 + (d >= days - 1 ? 2.0 : 0) + g() * 0.2) * 10) / 10,
         sleep: Math.round(Math.max(0, 7.2 + sleepDrift + g() * 0.4) * 10) / 10,
-        mood: mood
+        mood: mood,
+        exercise: Math.max(0, Math.round(125 + exDrift + g2() * 8)),
+        grip: Math.round((38 + gripDrift + g2() * 0.6) * 2) / 2
       });
     }
     return out;
@@ -57,7 +62,7 @@
 
   /** Answers of the FICTIONAL guided-demo astronaut (made-up values): mostly green, several yellow, one red (temperature). */
   function guided() {
-    return { hr: 72, sys: 138, dia: 82, glucose: 118, temp: 38.6, sleep: 5.2, mood: 2, fatigue: 2, dizzy: 1, vision: 1, pain: 1, emergency: 'no', wbc: 11.8, neut: 5200, lymph: '' };
+    return { hr: 72, sys: 138, dia: 82, glucose: 118, temp: 38.6, sleep: 5.2, mood: 2, exercise: 40, fatigue: 2, dizzy: 1, vision: 1, pain: 1, emergency: 'no', wbc: 11.8, neut: 5200, lymph: '' };
   }
 
   var api = { generate: generate, guided: guided };

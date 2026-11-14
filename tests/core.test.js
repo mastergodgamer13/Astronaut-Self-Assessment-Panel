@@ -111,6 +111,8 @@ test('demo scenario: sleep, heart rate, mood, blood pressure drift and the final
   assert.strictEqual(a.per.temp.status, 'attention');
   assert.strictEqual(a.per.glucose.status, 'ok');
   assert.strictEqual(a.per.dia.status, 'ok');
+  assert.notStrictEqual(a.per.exercise.status, 'ok'); assert.notStrictEqual(a.per.exercise.status, 'nodata');
+  assert.ok(['watch', 'attention'].indexOf(a.per.grip.status) >= 0);
 });
 
 test('assess on empty data: every indicator nodata, overall nodata', function () {
@@ -124,7 +126,8 @@ test('reference zones: one reading is enough, green / yellow / red', function ()
   assert.strictEqual(Core.rangeStatus('hr', 70), 'ok'); assert.strictEqual(Core.rangeStatus('hr', 110), 'watch');
   assert.strictEqual(Core.rangeStatus('hr', 150), 'attention'); assert.strictEqual(Core.rangeStatus('hr', 30), 'attention');
   assert.strictEqual(Core.rangeStatus('temp', 39), 'attention'); assert.strictEqual(Core.rangeStatus('mood', 2), 'watch');
-  Core.INDICATORS.forEach(function (i) { assert.ok(Core.REFERENCE[i.id], i.id); });
+  Core.INDICATORS.forEach(function (i) { assert.ok(i.baselineOnly ? !Core.REFERENCE[i.id] : Core.REFERENCE[i.id], i.id); });
+  assert.strictEqual(Core.rangeStatus('exercise', 120), 'ok'); assert.strictEqual(Core.rangeStatus('exercise', 0), 'watch'); assert.strictEqual(Core.rangeStatus('grip', 30), 'nodata');
   var a = Core.assess([{ date: '2026-01-01', hr: 130, sys: 120 }]);
   assert.strictEqual(a.per.hr.status, 'attention'); assert.strictEqual(a.per.hr.baselineStatus, 'nodata');
   assert.strictEqual(a.per.sys.status, 'ok'); assert.strictEqual(a.overall, 'attention');

@@ -175,7 +175,7 @@
       ]));
       wrap.appendChild(el('p', { class: 'msg', text: t('msg.' + res.status) }));
       var rf = Core.REFERENCE[id], meta = [];
-      meta.push(t('ref.line', { oklo: rf.ok[0], okhi: rf.ok[1], wlo: rf.watch[0], whi: rf.watch[1], unit: unitOf(ind) }));
+      meta.push(rf ? t('ref.line', { oklo: rf.ok[0], okhi: rf.ok[1], wlo: rf.watch[0], whi: rf.watch[1], unit: unitOf(ind) }) : t('ref.none'));
       if (res.baselineStatus === 'nodata') meta.push(res.reasonCode ? t('reason.' + res.reasonCode, res.reasonParams) : res.reason);
       else meta.push(t('meta', { mean: fmt(res.baseline.mean, ind), sd: fmt(res.baseline.sd, ind), unit: unitOf(ind), n: res.baseline.n,
         rn: res.recentN, rmean: fmt(res.recentMean, ind), z: res.z.toFixed(1) }));
