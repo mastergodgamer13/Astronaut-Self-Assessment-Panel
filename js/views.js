@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114j';
+    sc.src = 'js/osd635-genes.js?v=20261114k';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -624,8 +624,13 @@
     if (!r) return;
     if (r.loading) { box.appendChild(el('p', { class: 'msg', text: t('lv.busy') })); return; }
     if (!r.ok) { box.appendChild(el('p', { class: 'msg', text: t('lv.err.' + r.error, { status: r.status, keys: (r.keys || []).join(', ') }) })); return; }
-    box.appendChild(el('p', { class: 'msg', text: t('lv.count', { n: r.studies.length, total: r.total }) }));
-    r.studies.forEach(function (s) {
+    var osdr = r.studies.filter(function (s) { return !s.external; }), hidden = r.studies.length - osdr.length;
+    box.appendChild(el('p', { class: 'msg', text: t('lv.count', { n: osdr.length, total: r.total }) + (hidden ? ' ' + t('lv.hidden', { n: hidden }) : '') }));
+    if (r.raw) {
+      var rawBox = el('details', { class: 'msg' }, [el('summary', { text: t('lv.raw') }), el('pre', { text: r.raw })]);
+      box.appendChild(rawBox);
+    }
+    osdr.forEach(function (s) {
       var card = el('div', { class: 'ind' });
       card.appendChild(el('div', { class: 'ind-head' }, [el('div', null, [el('strong', { text: s.id }), ' ', s.title || t('lv.notitle')])]));
       var meta = [s.organism, s.projectType, s.mission].filter(Boolean).join(' · ');

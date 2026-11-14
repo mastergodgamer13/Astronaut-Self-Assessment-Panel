@@ -47,7 +47,7 @@
   function metaUrl(id) { return BASE + '/osdr/data/osd/meta/' + idNumber(id); }
   function studyPageUrl(id) { return DIRECT + '/osdr/data/osd/files/' + idNumber(id); }
   // human-readable study page on the OSDR website (repository root: https://osdr.nasa.gov/bio/repo)
-  function pageUrl(id) { return DIRECT + '/bio/repo/data/studies/OSD-' + idNumber(id); }
+  function pageUrl(id) { return /^OSD-\d+$/i.test(str(id)) ? DIRECT + '/bio/repo/data/studies/OSD-' + idNumber(id) : ''; }
 
   function topicsOf(text) {
     var low = str(text).toLowerCase(), out = [];
@@ -60,11 +60,14 @@
     var s = (h && (h._source || h.source)) || h || {};
     var id = pick(s, ['Study Identifier', 'study_identifier', 'Accession', 'accession', 'identifier', 'id']) || (h && (h._id || h.id)) || '';
     if (!/\d/.test(str(id))) return null;
-    id = /^OSD-/i.test(str(id)) ? str(id).toUpperCase() : (/^\d+$/.test(str(id)) ? 'OSD-' + id : str(id));
+    id = str(id).trim();
+    if (/^\d+$/.test(id)) id = 'OSD-' + id;
+    // only ids of the form OSD-<number> are OSDR studies with a page; anything else (another database's accession) is marked external
+    var osd = /^OSD-\d+$/i.test(id); if (osd) id = id.toUpperCase();
     var title = str(pick(s, ['Study Title', 'study_title', 'title', 'Title']));
     var desc = str(pick(s, ['Study Description', 'study_description', 'description', 'Description']));
     return {
-      id: id, n: idNumber(id), title: title, description: desc,
+      id: id, n: osd ? idNumber(id) : null, external: !osd, title: title, description: desc,
       organism: str(pick(s, ['organism', 'Organism', 'Study Organism'])),
       projectType: str(pick(s, ['Project Type', 'project_type'])),
       mission: str(pick(s, ['Mission Name', 'mission', 'Mission', 'Flight Program'])),
@@ -83,11 +86,11 @@
     }
     if (!hits && r && Array.isArray(r.results)) hits = r.results;
     if (!hits && r && Array.isArray(r.studies)) hits = r.studies;
-    if (!hits) return { total: 0, studies: [], recognized: false };
+    if (!hits) return { total: 0, studies: [], recognized: false, raw: '' };
     if (total && typeof total === 'object') total = total.value;
     var studies = [], seen = {};
     hits.forEach(function (h) { var s = normalizeHit(h); if (s && !seen[s.id]) { seen[s.id] = 1; studies.push(s); } });
-    return { total: typeof total === 'number' ? total : studies.length, studies: studies, recognized: true };
+    return { total: typeof total === 'number' ? total : studies.length, studies: studies, recognized: true, raw: JSON.stringify(hits.slice(0, 2), null, 1).slice(0, 2500) };
   }
 
   /** Is this study about humans? (organism says Homo sapiens). */
@@ -113,7 +116,7 @@
       if (!r.ok) return { ok: false, status: r.status, error: r.error, url: url, studies: [], total: 0 };
       var n = normalizeSearch(r.data);
       if (!n.recognized) return { ok: false, status: r.status, error: 'shape', url: url, studies: [], total: 0, keys: Object.keys(r.data || {}) };
-      return { ok: true, status: r.status, url: url, studies: n.studies, total: n.total };
+      return { ok: true, status: r.status, url: url, studies: n.studies, total: n.total, raw: n.raw };
     });
   }
 
