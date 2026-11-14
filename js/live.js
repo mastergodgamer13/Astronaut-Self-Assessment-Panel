@@ -116,6 +116,56 @@
     });
   }
 
+
+  function filesUrl(id) { return BASE + '/osdr/data/osd/files/' + idNumber(id); }
+  var TABLE_EXT = /\.(csv|tsv|txt|xlsx|xls)$/i;
+
+  /** Study metadata response -> { id, title, description, release, organisms[], assays[], factors[], mission, projectType } (any missing part stays empty). */
+  function normalizeMeta(r, id) {
+    var key = 'OSD-' + idNumber(id), st = (r && r.study && (r.study[key] || r.study[Object.keys(r.study)[0]])) || {};
+    var info = st.additionalInformation || {};
+    function names(a, f) { return (Array.isArray(a) ? a : []).map(function (x) { return str(typeof x === 'object' && x ? (x[f] || x.name || x.term || x.text || '') : x); }).filter(Boolean); }
+    var comments = (r && r.studies && r.studies[key] && r.studies[key].comments) || (r && r.studies && (r.studies[Object.keys(r.studies)[0]] || {}).comments) || [];
+    var cm = {};
+    (Array.isArray(comments) ? comments : []).forEach(function (c) { if (c && c.name) cm[c.name] = c.value; });
+    var assays = info.assays || st.assays;
+    return {
+      id: key, title: str(st.title), description: str(st.description), release: str(st.publicReleaseDate),
+      organisms: names(info.organisms, 'organism').length ? names(info.organisms, 'organism') : (Array.isArray(info.organisms) ? info.organisms.map(str) : []),
+      assays: Array.isArray(assays) ? assays.map(function (a) { return str(a.measurementType || a.technologyType || a.name || (typeof a === 'string' ? a : '')); }).filter(Boolean) : [],
+      factors: names(st.factors, 'name'),
+      mission: str(cm['Mission Name']), projectType: str(cm['Project Type']),
+      topics: topicsOf(str(st.title) + ' ' + str(st.description))
+    };
+  }
+
+  /** Files response -> [{ name, url, size, category, table }] sorted tables first. */
+  function normalizeFiles(r, id) {
+    var key = 'OSD-' + idNumber(id), root = (r && r.studies && (r.studies[key] || r.studies[Object.keys(r.studies)[0]])) || {};
+    var list = root.study_files || root.files || [];
+    var out = (Array.isArray(list) ? list : []).map(function (f) {
+      var name = str(f.file_name || f.name), url = str(f.remote_url || f.url);
+      if (!name) return null;
+      return { name: name, url: url ? (/^https?:/.test(url) ? url : DIRECT + (url.charAt(0) === '/' ? '' : '/') + url) : '',
+        size: typeof f.file_size === 'number' ? f.file_size : Number(f.file_size) || null, category: str(f.category || f.subcategory), table: TABLE_EXT.test(name) };
+    }).filter(Boolean);
+    out.sort(function (a, b) { return (b.table ? 1 : 0) - (a.table ? 1 : 0) || a.name.localeCompare(b.name); });
+    return out;
+  }
+
+  /** Loads one study's metadata and file list (two calls, reported separately). */
+  function studyDetail(fetchFn, id) {
+    return Promise.all([getJson(fetchFn, metaUrl(id)), getJson(fetchFn, filesUrl(id))]).then(function (rs) {
+      var m = rs[0], f = rs[1];
+      return {
+        id: id,
+        meta: m.ok ? normalizeMeta(m.data, id) : null, metaError: m.ok ? null : m.error, metaStatus: m.status,
+        files: f.ok ? normalizeFiles(f.data, id) : [], filesError: f.ok ? null : f.error, filesStatus: f.status,
+        ok: m.ok || f.ok
+      };
+    });
+  }
+
   /** Connection check: one search + one metadata call; reports what happened for each. */
   function diagnose(fetchFn) {
     var u1 = searchUrl({ term: '', size: 1 }), u2 = metaUrl('OSD-575');
@@ -131,7 +181,7 @@
     });
   }
 
-  var api = { DIRECT: DIRECT, setBase: setBase, getBase: getBase, TOPICS: TOPICS, searchUrl: searchUrl, metaUrl: metaUrl, pageUrl: pageUrl, studyPageUrl: studyPageUrl, idNumber: idNumber,
+  var api = { filesUrl: filesUrl, normalizeMeta: normalizeMeta, normalizeFiles: normalizeFiles, studyDetail: studyDetail, DIRECT: DIRECT, setBase: setBase, getBase: getBase, TOPICS: TOPICS, searchUrl: searchUrl, metaUrl: metaUrl, pageUrl: pageUrl, studyPageUrl: studyPageUrl, idNumber: idNumber,
     topicsOf: topicsOf, normalizeHit: normalizeHit, normalizeSearch: normalizeSearch, isHuman: isHuman, isSpaceflight: isSpaceflight,
     getJson: getJson, search: search, diagnose: diagnose };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Live = api;

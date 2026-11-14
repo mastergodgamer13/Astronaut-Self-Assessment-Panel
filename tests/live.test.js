@@ -47,5 +47,26 @@ const ES = { hits: { total: { value: 2 }, hits: [
     const d = await L.diagnose(f); assert.ok(d.ok && d.search.ok && d.meta.ok);
     const d2 = await L.diagnose(() => Promise.reject(new Error('x'))); assert.ok(!d2.ok); assert.strictEqual(d2.search.error, 'network');
   });
+  const META = { hits: 1, study: { 'OSD-575': { title: 'Serum panel', description: 'Blood glucose in crew', publicReleaseDate: '2023-01-01',
+      additionalInformation: { organisms: [{ organism: 'Homo sapiens' }], assays: [{ measurementType: 'clinical chemistry' }] }, factors: [{ name: 'Spaceflight' }] } },
+    studies: { 'OSD-575': { comments: [{ name: 'Mission Name', value: 'Inspiration4' }, { name: 'Project Type', value: 'Spaceflight Study' }] } } };
+  const FILES = { studies: { 'OSD-575': { study_files: [
+    { file_name: 'a.zip', remote_url: '/geode-py/ws/a.zip', file_size: 5 }, { file_name: 'cbc.csv', remote_url: '/geode-py/ws/cbc.csv', file_size: '120' } ] } } };
+  await test('normalizeMeta / normalizeFiles: fields read, tables first, urls made absolute', () => {
+    const m = L.normalizeMeta(META, 'OSD-575');
+    assert.deepStrictEqual([m.title, m.mission, m.projectType, m.organisms, m.assays, m.factors], ['Serum panel', 'Inspiration4', 'Spaceflight Study', ['Homo sapiens'], ['clinical chemistry'], ['Spaceflight']]);
+    assert.ok(m.topics.includes('blood'));
+    const f = L.normalizeFiles(FILES, 'OSD-575');
+    assert.deepStrictEqual(f.map(x => x.name), ['cbc.csv', 'a.zip']); assert.ok(f[0].table && !f[1].table);
+    assert.strictEqual(f[0].url, 'https://osdr.nasa.gov/geode-py/ws/cbc.csv'); assert.strictEqual(f[0].size, 120);
+    assert.deepStrictEqual(L.normalizeFiles({}, 'OSD-1'), []); assert.strictEqual(L.normalizeMeta({}, 'OSD-1').title, '');
+  });
+  await test('studyDetail: both calls reported separately, partial failure kept', async () => {
+    const d = await L.studyDetail(url => url.includes('/meta/') ? ok(META)() : ok(FILES)(), 'OSD-575');
+    assert.ok(d.ok && d.meta.title === 'Serum panel' && d.files.length === 2);
+    const p = await L.studyDetail(url => url.includes('/meta/') ? Promise.reject(new Error('x')) : ok(FILES)(), 'OSD-575');
+    assert.ok(p.ok && p.meta === null && p.metaError === 'network' && p.files.length === 2);
+    const n0 = await L.studyDetail(() => Promise.reject(new Error('x')), 'OSD-575'); assert.ok(!n0.ok);
+  });
   console.log(n + ' live tests passed');
 })().catch(e => { console.error(e); process.exit(1); });

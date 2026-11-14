@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114h';
+    sc.src = 'js/osd635-genes.js?v=20261114i';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -537,8 +537,36 @@
   }
 
   /* ---------- Live NASA catalog (OSDR API, called from the browser) ---------- */
-  var live = { term: '', human: true, diag: null, res: null, busy: false, proxy: '' };
+  var live = { term: '', human: true, diag: null, res: null, busy: false, proxy: '', open: null, detail: null };
   try { live.proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { live.proxy = ''; }
+
+
+  function fmtSize(n) { return n === null ? '' : n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? Math.round(n / 1024) + ' KB' : n + ' B'; }
+
+  function liveDetail(ctx, d) {
+    var t = ctx.t, box = el('div', { class: 'msg' });
+    if (!d || d.loading) { box.appendChild(document.createTextNode(t('lv.busy'))); return box; }
+    if (!d.ok) { box.appendChild(el('p', { text: t('lv.err.' + (d.metaError || d.filesError), { status: d.metaStatus, keys: '' }) })); return box; }
+    if (d.meta) {
+      var m = d.meta;
+      if (m.description) box.appendChild(el('p', { text: m.description.length > 600 ? m.description.slice(0, 600) + '…' : m.description }));
+      var facts = [[t('lv.d.assays'), m.assays.join(', ')], [t('lv.d.factors'), m.factors.join(', ')], [t('lv.d.release'), m.release]].filter(function (x) { return x[1]; });
+      facts.forEach(function (x) { box.appendChild(el('div', { class: 'meta', text: x[0] + ': ' + x[1] })); });
+    } else box.appendChild(el('p', { text: t('lv.d.nometa') }));
+    if (d.filesError) box.appendChild(el('p', { text: t('lv.d.nofiles') }));
+    else {
+      var tables = d.files.filter(function (f) { return f.table; });
+      box.appendChild(el('strong', { text: t('lv.d.files', { n: d.files.length, tables: tables.length }) }));
+      var ul = el('ul');
+      d.files.slice(0, 40).forEach(function (f) {
+        ul.appendChild(el('li', { text: (f.table ? '▦ ' : '') + f.name + (f.size ? ' (' + fmtSize(f.size) + ')' : '') }));
+      });
+      box.appendChild(ul);
+      if (d.files.length > 40) box.appendChild(el('div', { class: 'meta', text: t('lv.d.more', { n: d.files.length - 40 }) }));
+      box.appendChild(el('div', { class: 'meta', text: t('lv.d.next') }));
+    }
+    return box;
+  }
 
   function renderLive(ctx, box) {
     var t = ctx.t, L = ctx.Live;
@@ -603,7 +631,15 @@
       var meta = [s.organism, s.projectType, s.mission].filter(Boolean).join(' · ');
       if (meta) card.appendChild(el('div', { class: 'meta', text: meta }));
       if (s.topics.length) card.appendChild(el('div', { class: 'meta', text: s.topics.map(function (k) { return t('lv.topic.' + k); }).join(' · ') }));
+      var det = el('button', { type: 'button', text: t(live.open === s.id ? 'lv.hide' : 'lv.details') });
+      det.addEventListener('click', function () {
+        if (live.open === s.id) { live.open = null; again(); return; }
+        live.open = s.id; live.detail = { loading: true }; again();
+        L.studyDetail(fetchFn, s.id).then(function (d) { if (live.open === s.id) { live.detail = d; again(); } });
+      });
+      card.appendChild(det); card.appendChild(document.createTextNode(' '));
       card.appendChild(el('a', { href: L.pageUrl(s.id), target: '_blank', rel: 'noopener noreferrer', text: t('lv.open') }));
+      if (live.open === s.id) card.appendChild(liveDetail(ctx, live.detail));
       box.appendChild(card);
     });
     box.appendChild(el('p', { class: 'msg', text: t('lv.note') }));
