@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261114f';
+    sc.src = 'js/osd635-genes.js?v=20261114g';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -536,5 +536,65 @@
     box.appendChild(el('p', { class: 'meta' }, [t('osdr.source') + ' ', el('a', { href: O.SOURCE_URL, target: '_blank', rel: 'noopener noreferrer', text: t('osdr.link') })]));
   }
 
-  root.Views = { renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+  /* ---------- Live NASA catalog (OSDR API, called from the browser) ---------- */
+  var live = { term: '', human: true, diag: null, res: null, busy: false };
+
+  function renderLive(ctx, box) {
+    var t = ctx.t, L = ctx.Live;
+    box.innerHTML = '';
+    box.appendChild(el('h2', { text: t('lv.title') }));
+    box.appendChild(el('div', { class: 'badge real', text: t('lv.badge') }));
+    box.appendChild(el('p', { class: 'msg', text: t('lv.what') }));
+    function again() { renderLive(ctx, box); }
+    var fetchFn = function (u) { return window.fetch(u); };
+
+    // 1. connection check
+    var chk = el('button', { type: 'button', text: t(live.busy ? 'lv.busy' : 'lv.check') });
+    chk.addEventListener('click', function () {
+      live.busy = true; live.diag = null; again();
+      L.diagnose(fetchFn).then(function (d) { live.busy = false; live.diag = d; again(); });
+    });
+    box.appendChild(chk);
+    if (live.diag) {
+      var d = live.diag, ul = el('ul', { class: 'msg' });
+      [['search', d.search], ['meta', d.meta]].forEach(function (p) {
+        var r = p[1];
+        ul.appendChild(el('li', { text: t('lv.diag.' + p[0]) + ': ' + (r.ok ? t('lv.ok') : t('lv.err.' + r.error, { status: r.status, keys: r.keys.join(', ') })) }));
+      });
+      box.appendChild(ul);
+      box.appendChild(el('p', { class: 'msg', text: d.ok ? t('lv.diag.good') : t('lv.diag.bad') }));
+    }
+
+    // 2. search
+    var f = el('form', { novalidate: 'novalidate' });
+    var inp = el('input', { type: 'search', name: 'term', value: live.term, placeholder: t('lv.ph'), 'aria-label': t('lv.ph') });
+    var cb = el('input', { type: 'checkbox', name: 'human' }); cb.checked = live.human;
+    f.appendChild(el('label', { class: 'full' }, [el('span', { text: t('lv.term') }), inp]));
+    f.appendChild(el('label', null, [cb, ' ', t('lv.human')]));
+    f.appendChild(el('button', { type: 'submit', text: t('lv.search') }));
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault(); live.term = inp.value; live.human = cb.checked; live.res = { loading: true }; again();
+      L.search(fetchFn, { term: live.term, human: live.human, size: 50 }).then(function (r) { live.res = r; again(); });
+    });
+    box.appendChild(f);
+
+    // 3. results
+    var r = live.res;
+    if (!r) return;
+    if (r.loading) { box.appendChild(el('p', { class: 'msg', text: t('lv.busy') })); return; }
+    if (!r.ok) { box.appendChild(el('p', { class: 'msg', text: t('lv.err.' + r.error, { status: r.status, keys: (r.keys || []).join(', ') }) })); return; }
+    box.appendChild(el('p', { class: 'msg', text: t('lv.count', { n: r.studies.length, total: r.total }) }));
+    r.studies.forEach(function (s) {
+      var card = el('div', { class: 'ind' });
+      card.appendChild(el('div', { class: 'ind-head' }, [el('div', null, [el('strong', { text: s.id }), ' ', s.title || t('lv.notitle')])]));
+      var meta = [s.organism, s.projectType, s.mission].filter(Boolean).join(' · ');
+      if (meta) card.appendChild(el('div', { class: 'meta', text: meta }));
+      if (s.topics.length) card.appendChild(el('div', { class: 'meta', text: s.topics.map(function (k) { return t('lv.topic.' + k); }).join(' · ') }));
+      card.appendChild(el('a', { href: L.pageUrl(s.id), target: '_blank', rel: 'noopener noreferrer', text: t('lv.open') }));
+      box.appendChild(card);
+    });
+    box.appendChild(el('p', { class: 'msg', text: t('lv.note') }));
+  }
+
+  root.Views = { renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

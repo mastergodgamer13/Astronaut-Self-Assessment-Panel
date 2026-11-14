@@ -1,4 +1,12 @@
-# Astronot Self Check
+# Live Lifesaver
+
+Continuation of *Astronot Self Check* (NASA Space Apps 2026). Goal of this repository: instead of adding each NASA dataset by hand, read the NASA OSDR catalog live and make every human spaceflight health dataset reachable from the app. Everything below is the base that was imported from the first project.
+
+## Live NASA catalog (new)
+
+The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/osdr/data/search`, `/osdr/data/osd/meta/{id}`) from the browser: a connection check that reports what NASA answered, a search (human studies only by default) and a list of studies with keyword topic labels (blood, immune, metabolism, heart, bone/muscle, ...) and a link to each study. Code: `js/live.js` (pure, network injected, tests in `tests/live.test.js`). The response layout is read defensively and an unrecognised layout is reported, never guessed. Not yet built: loading a study's data tables and turning them into charts automatically.
+
+# Base project: Astronot Self Check
 
 Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for Astronauts on Space Missions"* (health monitoring).
 
