@@ -99,10 +99,11 @@
       });
       tbody.appendChild(tr);
     });
+    var preTotal = sum.tps.filter(function (tp) { return O.groupOf(tp) === 'pre'; }).length;
     var pre = el('tr', { class: 'sumrow' }, [el('th', { scope: 'row', text: t('fl.preMean') })]);
     names.forEach(function (a) {
       var an = O.ANALYTES[a], s = sum.analytes[a];
-      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals === 0 ? 1 : 2), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: O.PRE }) })] : ['—']));
+      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals === 0 ? 1 : 2), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: preTotal }) })] : ['—']));
     });
     tbody.appendChild(pre);
     box.appendChild(el('div', { class: 'tablewrap' }, [el('table', { class: 'cmp' }, [el('thead', null, [head]), tbody])]));
@@ -158,7 +159,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261115b';
+    sc.src = 'js/osd635-genes.js?v=20261115f';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -448,7 +449,7 @@
     names.forEach(function (a) { head.appendChild(el('th', { scope: 'col', text: t('o9.a.' + a) })); });
     var tbody = el('tbody');
     sum.tps.forEach(function (tp, i) {
-      var tr = el('tr', null, [el('th', { scope: 'row' }, [tp, el('div', { class: 'meta', text: t('fl.group.' + (I.TIMEPOINTS.indexOf(tp) < I.PRE ? 'pre' : 'post')) })])]);
+      var tr = el('tr', null, [el('th', { scope: 'row' }, [tp, el('div', { class: 'meta', text: t('fl.group.' + ctx.Osdr.groupOf(tp)) })])]);
       names.forEach(function (a) {
         var an = I.ANALYTES[a], dd = an.decimals + 1, p = sum.analytes[a].points[i];
         if (p.value === null) { tr.appendChild(el('td', { text: '—' })); return; }
@@ -463,12 +464,41 @@
     var pre = el('tr', { class: 'sumrow' }, [el('th', { scope: 'row', text: t('fl.preMean') })]);
     names.forEach(function (a) {
       var an = I.ANALYTES[a], s = sum.analytes[a];
-      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals + 1), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: I.PRE }) })] : ['—']));
+      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals + 1), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: sum.tps.filter(function (tp) { return ctx.Osdr.groupOf(tp) === 'pre'; }).length }) })] : ['—']));
     });
     tbody.appendChild(pre);
     box.appendChild(el('div', { class: 'tablewrap' }, [el('table', { class: 'cmp' }, [el('thead', null, [head]), tbody])]));
     box.appendChild(el('p', { class: 'meta', text: '▼ ' + t('osdr.low') + ' · ▲ ' + t('osdr.high') + ' · ' + t('osdr.delta') + ' (+/−)' }));
     box.appendChild(el('p', { class: 'meta', text: t('im.note') }));
+  }
+
+  /* ---------- Inspirations: the three NASA studies used to gather ideas ---------- */
+  var INSPIRATIONS = [
+    { id: 'osd575', study: 'OSD-575', jump: 'osdr' },
+    { id: 'osd569', study: 'OSD-569', jump: 'o569' },
+    { id: 'osd635', study: 'OSD-635', jump: 'o635' }
+  ];
+  function renderInspirations(ctx, box) {
+    var t = ctx.t;
+    box.innerHTML = '';
+    box.appendChild(el('h2', { text: t('insp.title') }));
+    box.appendChild(el('p', { class: 'msg', text: t('insp.intro') }));
+    var grid = el('div', { class: 'insp-grid' });
+    INSPIRATIONS.forEach(function (s) {
+      var card = el('article', { class: 'insp-card' });
+      card.appendChild(el('h3', { text: t('insp.' + s.id + '.name') }));
+      card.appendChild(el('p', { class: 'msg', text: t('insp.' + s.id + '.what') }));
+      card.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('insp.idea') + ' ' }), t('insp.' + s.id + '.idea')]));
+      var row = el('div', { class: 'insp-links' });
+      var go = el('button', { type: 'button', class: 'ghost', text: t('insp.open') });
+      go.addEventListener('click', function () { var n = document.getElementById(s.jump); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      row.appendChild(go);
+      row.appendChild(el('a', { href: 'https://osdr.nasa.gov/bio/repo/data/studies/' + s.study, target: '_blank', rel: 'noopener noreferrer', text: t('insp.page', { id: s.study }) }));
+      card.appendChild(row);
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+    box.appendChild(el('p', { class: 'meta', text: t('insp.more') }));
   }
 
   /* ---------- Real data (OSDR) ---------- */
@@ -525,12 +555,6 @@
     var pp = el('div', { class: 'prepost-sub' });
     box.appendChild(pp);
     renderPrePost(ctx, pp, { sub: true });
-    var o6 = el('div', { class: 'osd635' });
-    box.appendChild(o6);
-    renderOsd635(ctx, o6);
-    var o9 = el('div', { class: 'osd569' });
-    box.appendChild(o9);
-    renderOsd569(ctx, o9);
     box.appendChild(el('p', { class: 'msg', text: t('osdr.limits') }));
     box.appendChild(el('p', { class: 'meta', text: t('osdr.fileNote') }));
     box.appendChild(el('p', { class: 'meta' }, [t('osdr.source') + ' ', el('a', { href: O.SOURCE_URL, target: '_blank', rel: 'noopener noreferrer', text: t('osdr.link') })]));
@@ -651,9 +675,9 @@
   }
 
   /* ---------- Guided check-up: one question per slide ---------- */
-  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '' };
+  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '', live: { state: 'idle' } };
 
-  function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
+  function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.panel ? ctx.t('lab.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
 
   function wizValueText(ctx, item) {
     var t = ctx.t, q = item.q;
@@ -664,8 +688,16 @@
   }
 
   function crewBlock(ctx, q) {
-    var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '';
-    if (q.kind === 'lab') { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
+    var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '', liveR = wiz.live && wiz.live.ranges && wiz.live.ranges[q.id];
+    if (liveR) { // real NASA file, read live
+      var fl = function (a) { return a ? a[0] + '–' + a[1] : '—'; }, lb = el('div', { class: 'callout' });
+      lb.appendChild(el('strong', { text: t('cu.crew.title') + ' ' })); lb.appendChild(el('span', { class: 'badge real', text: t('cu.live.badge') }));
+      lb.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: liveR.src, n: liveR.n, pre: fl(liveR.pre), post: fl(liveR.post), unit: liveR.unit }) }));
+      if (liveR.lo !== null || liveR.hi !== null) lb.appendChild(el('p', { class: 'meta', text: t('cu.live.lab', { lo: liveR.lo === null ? '—' : liveR.lo, hi: liveR.hi === null ? '—' : liveR.hi, unit: liveR.unit }) }));
+      return lb;
+    }
+    if (q.kind === 'lab' && !q.panel) { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
+    else if (q.panel) { /* no bundled copy of this analyte: only the live file has it */ }
     else if (q.id === 'glucose') { src = 'OSD-575'; r = C.crewRange(ctx.Osdr.CREW, q.id, ctx.Osdr.PRE); unit = ctx.Osdr.ANALYTES.glucose ? ctx.Osdr.ANALYTES.glucose.unit : 'mg/dL'; }
     var box = el('div', { class: 'callout' });
     box.appendChild(el('strong', { text: t('cu.crew.title') }));
@@ -680,10 +712,11 @@
     box.innerHTML = '';
     if (!wiz.checked[q.id] || !p.ok) return;
     if (p.skipped) { box.appendChild(el('p', { class: 'msg', text: t('cu.nodata') })); return; }
-    var ev = C.evaluate(q, p.value), acts = C.advice(q, ev);
-    if (ev.baselineOnly) { box.appendChild(el('p', { class: 'msg', text: t('cu.baseline') })); return; }
+    var ev = C.evaluate(q, p.value, wiz.answers['usual_' + q.id]), acts = C.advice(q, ev);
+    if (ev.baselineOnly && ev.status === 'nodata') { box.appendChild(el('p', { class: 'msg', text: t('cu.baseline') })); return; }
     box.appendChild(el('div', null, [ctx.chip(ev.status)]));
     box.appendChild(el('p', { class: 'msg', text: ev.status === 'ok' ? t('cu.okmsg') : t('msg.' + ev.status) }));
+    if (ev.baselineOnly) box.appendChild(el('div', { class: 'meta', text: t('cu.vsUsual', { ref: ev.usual, pct: Math.abs(ev.pct), word: t(ev.dir ? 'cu.worse' : 'cu.same') }) }));
     var z = C.zonesOf(q);
     if (z) box.appendChild(el('div', { class: 'meta', text: t('ref.line', { oklo: z.ok[0], okhi: z.ok[1], wlo: z.watch[0], whi: z.watch[1], unit: C.limits(q).unit }) }));
     if (acts.length) {
@@ -737,6 +770,21 @@
       var b1 = el('button', { type: 'button', text: t('cu.startOwn') }), b2 = el('button', { type: 'button', text: t('cu.startDemo') });
       b1.addEventListener('click', function () { reset(false); }); b2.addEventListener('click', function () { reset(true); });
       box.appendChild(b1); box.appendChild(document.createTextNode(' ')); box.appendChild(b2);
+      // real crew values from NASA files (needs the relay address from the Live NASA tab); bundled copies are used otherwise
+      var lv = el('div', { class: 'callout' }), lb = el('button', { type: 'button', text: t(wiz.live.state === 'busy' ? 'cu.live.busy' : 'cu.live.load') });
+      lv.appendChild(el('strong', { text: t('cu.live.title') })); lv.appendChild(el('p', { class: 'meta', text: t('cu.live.hint') }));
+      lb.addEventListener('click', function () {
+        var proxy = ''; try { proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { /* storage may be blocked */ }
+        ctx.Live.setBase(proxy); wiz.live = { state: 'busy' }; renderCheckup(ctx, box, hooks);
+        ctx.Crewlive.load(function (u) { return window.fetch(u); }, ctx.Live).then(function (r) {
+          wiz.live = r.ok ? { state: 'ok', ranges: r.ranges, studies: r.studies, errors: r.errors } : { state: 'err', errors: r.errors };
+          renderCheckup(ctx, box, hooks);
+        });
+      });
+      lv.appendChild(lb);
+      if (wiz.live.state === 'ok') lv.appendChild(el('p', { class: 'msg', text: t('cu.live.ok', { studies: wiz.live.studies.join(', ') }) + (wiz.live.errors.length ? ' ' + t('cu.live.partial', { studies: wiz.live.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
+      if (wiz.live.state === 'err') lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.err') }));
+      box.appendChild(lv);
       return;
     }
 
@@ -755,6 +803,7 @@
     if (q.kind === 'vital' || q.kind === 'lab') slide.appendChild(el('p', { class: 'msg', text: t('cu.enter', { what: wizLabel(ctx, q) }) }));
     slide.appendChild(el('p', { class: 'meta', text: q.kind === 'vital' ? t('info.' + q.id + '.how') : q.kind === 'lab' ? t('cu.optional') : t('cu.q.' + q.id + '.help') }));
 
+    if (ctx.t('tools.' + q.id) !== 'tools.' + q.id) slide.appendChild(el('p', { class: 'meta tools', text: t('cu.tools') + ' ' + t('tools.' + q.id) }));
     var read;
     var cur = wiz.answers[q.id];
     if (q.kind === 'symptom' || q.kind === 'redflag') {
@@ -772,6 +821,15 @@
       slide.appendChild(el('label', null, [inp, ' ', el('span', { text: L.unit })]));
       read = function () { return inp.value; };
       if (q.id === 'reaction') slide.appendChild(reactionTest(ctx, inp));
+      if (!C.zonesOf(q)) { // no fixed normal range: ask for the person's own usual value
+        var ukey = 'usual_' + q.id, saved = ''; try { saved = window.localStorage.getItem('ll.' + ukey) || ''; } catch (e) { /* storage may be blocked */ }
+        if (wiz.answers[ukey] === undefined && saved) wiz.answers[ukey] = saved;
+        var uin = el('input', { type: 'number', name: 'usual', inputmode: 'decimal', step: String(L.step), min: String(L.min), max: String(L.max), 'aria-label': t('cu.usual') });
+        if (wiz.answers[ukey] !== undefined && wiz.answers[ukey] !== '') uin.value = String(wiz.answers[ukey]);
+        slide.appendChild(el('label', null, [el('span', { text: t('cu.usual') + ' ' }), uin, ' ', el('span', { text: L.unit })]));
+        slide.appendChild(el('p', { class: 'meta', text: t('cu.usualHelp') }));
+        uin.addEventListener('input', function () { wiz.answers[ukey] = uin.value; wiz.checked[q.id] = false; try { window.localStorage.setItem('ll.' + ukey, uin.value); } catch (e) { /* ignore */ } });
+      }
     }
     var errBox = el('p', { class: 'form-msg err', role: 'alert', text: wiz.err });
     slide.appendChild(errBox);
@@ -826,5 +884,5 @@
     box.appendChild(slide);
   }
 
-  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

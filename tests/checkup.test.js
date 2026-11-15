@@ -9,8 +9,9 @@ let n = 0;
 function test(name, fn) { fn(); n++; console.log('ok -', name); }
 const Q = id => C.question(id);
 
-test('26 slides: 14 vitals, 5 symptoms (incl. flank pain), 1 red-flag, 3 labs; every slide has an organ except the red flag', () => {
-  assert.deepStrictEqual(C.QUESTIONS.map(q => q.kind).join(','), 'vital,vital,vital,vital,vital,vital,vital,vital,vital,symptom,symptom,vital,vital,symptom,vital,vital,vital,vital,vital,vital,symptom,symptom,redflag,lab,lab,lab');
+test('40 slides: 26 vitals, 5 symptoms (incl. flank pain), 1 red-flag, 8 labs; every slide has an organ except the red flag', () => {
+  const n = k => C.QUESTIONS.filter(q => q.kind === k).length;
+  assert.deepStrictEqual([n('vital'), n('symptom'), n('redflag'), n('lab'), C.QUESTIONS.length], [26, 5, 1, 8, 40]);
 });
 test('parse: numbers with comma, limits, integers, choices, skipped', () => {
   assert.strictEqual(C.parse(Q('hr'), '72,5').value, 72.5);
@@ -50,11 +51,11 @@ test('every non-green case of every question has actions (low and high where pos
 });
 test('run: guided demo astronaut is mostly green with yellow cases and one red', () => {
   const r = C.run(Demo.guided());
-  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 14, watch: 8, attention: 1, nodata: 3 });
+  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 25, watch: 10, attention: 1, nodata: 4 });
   assert.strictEqual(r.sorted[0].id, 'temp'); assert.ok(r.items.find(i => i.id === 'lymph').skipped);
 });
 test('run: nothing answered is nodata, never ok', () => {
-  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 26);
+  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 40);
 });
 test('toEntry: only the vitals that were answered; null when none', () => {
   assert.deepStrictEqual(C.toEntry({ hr: 72, sys: '138', mood: 2, exercise: 45, fatigue: 3, wbc: 9 }, '2026-11-14'), { date: '2026-11-14', hr: 72, sys: 138, mood: 2, exercise: 45 });
@@ -74,7 +75,7 @@ test('every action and question text exists in all four languages', () => {
   ['en', 'tr', 'it', 'es'].forEach(l => {
     const D = I.DICT[l];
     acts.forEach(a => assert.ok(D['act.' + a], l + ' act.' + a));
-    C.QUESTIONS.forEach(q => { if (q.kind === 'symptom' || q.kind === 'redflag') { assert.ok(D['cu.q.' + q.id + '.ask'], l + q.id); assert.ok(D['cu.q.' + q.id + '.help'], l + q.id); } if (q.kind === 'vital') assert.ok(D['ind.' + q.id] && D['info.' + q.id + '.how'], l + q.id); if (q.kind === 'lab') assert.ok(D['o9.a.' + q.id], l + q.id); });
+    C.QUESTIONS.forEach(q => { if (q.kind === 'symptom' || q.kind === 'redflag') { assert.ok(D['cu.q.' + q.id + '.ask'], l + q.id); assert.ok(D['cu.q.' + q.id + '.help'], l + q.id); } if (q.kind === 'vital') assert.ok(D['ind.' + q.id] && D['info.' + q.id + '.how'], l + q.id); if (q.kind === 'lab') assert.ok(D[q.panel ? 'lab.' + q.id : 'o9.a.' + q.id] && (!q.panel || D['region.' + q.organ + '.title']), l + q.id); });
   });
 });
 console.log(n + ' checkup tests passed');
@@ -99,10 +100,34 @@ test('baseline-only slides (reaction, grip) are recorded without a colour and do
   });
 });
 
+test('own-usual comparison: reaction slower / grip weaker / breath-hold shorter than usual by >10 % yellow, >20 % red', () => {
+  assert.strictEqual(C.evaluate(Q('reaction'), 300, 290).status, 'ok');
+  assert.strictEqual(C.evaluate(Q('reaction'), 330, 290).status, 'watch');
+  assert.strictEqual(C.evaluate(Q('reaction'), 400, 290).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('reaction'), 250, 290).status, 'ok'); // faster is fine
+  assert.strictEqual(C.evaluate(Q('grip'), 28, 35).status, 'watch');
+  assert.strictEqual(C.evaluate(Q('grip'), 25, 35).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('breathhold'), 20, 32).status, 'attention');
+  assert.ok(C.advice(Q('grip'), C.evaluate(Q('grip'), 28, 35)).includes('stretch'));
+  assert.strictEqual(C.evaluate(Q('grip'), 28, '').status, 'nodata'); // no usual value: no colour
+});
+
 test('reactionMedian: median of valid taps, needs 3, ignores nonsense', () => {
   assert.strictEqual(C.reactionMedian([300, 250, 400, 280, 310]), 300);
   assert.strictEqual(C.reactionMedian([300, 250, 400, 280]), 290);
   assert.strictEqual(C.reactionMedian([300, 250]), null);
   assert.strictEqual(C.reactionMedian([300, 5, null, 250, 20000, 260]), 260);
   assert.strictEqual(C.reactionMedian(), null);
+});
+
+test('metabolic-panel labs: zones come from the NASA lab range, kidney and liver slides are optional', () => {
+  const Q2 = id => C.question(id);
+  assert.strictEqual(C.evaluate(Q2('creatinine'), 1.0).status, 'ok');
+  assert.strictEqual(C.evaluate(Q2('creatinine'), 1.5).status, 'watch');
+  assert.strictEqual(C.evaluate(Q2('creatinine'), 2.5).status, 'attention');
+  assert.strictEqual(C.evaluate(Q2('egfr'), 50).status, 'watch');
+  assert.strictEqual(C.evaluate(Q2('alt'), 100).status, 'attention');
+  assert.strictEqual(C.parse(Q2('alt'), '').skipped, true);
+  assert.ok(C.advice(Q2('creatinine'), C.evaluate(Q2('creatinine'), 1.5)).includes('reportLab'));
+  assert.strictEqual(C.parse(Q2('creatinine'), '99').ok, false);
 });

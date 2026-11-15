@@ -103,7 +103,7 @@
     var date = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     var entry = Checkup.toEntry(answers, date);
     if (!entry) return { ok: false, key: 'cu.nosave.vitals' };
-    store.saveEntry(store.current(), entry); render();
+    store.saveEntry(store.current(), entry); if (window.Pwa) Pwa.checkedIn(date); render();
     return { ok: true, key: 'cu.saved', date: date };
   }
 
@@ -112,7 +112,7 @@
 
   // adds the immune indicators (own blood-count values, immune.js) to the core assessment; the demo has none
   function withImmune(base) {
-    var im = Immune.assess(store.immuneOf(store.current()));
+    var im = Immune.assess(store.immuneOf(store.current()), { minPre: store.missionOf(store.current()).minPre });
     var ids = Object.keys(im.per), all = base.counts;
     ids.forEach(function (id) { base.per[id] = im.per[id]; all[im.per[id].status]++; });
     var statuses = Object.keys(base.per).map(function (k) { return base.per[k].status; });
@@ -181,7 +181,7 @@
         rn: res.recentN, rmean: fmt(res.recentMean, ind), z: res.z.toFixed(1) }));
       meta = meta.join(' ');
       wrap.appendChild(el('div', { class: 'meta', text: meta }));
-      wrap.appendChild(chart(ind, res));
+      if (res.series.length >= 2) wrap.appendChild(chart(ind, res)); else wrap.appendChild(el('p', { class: 'meta', text: t('chart.need') }));
       wrap.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('why') + ' ' }), t('info.' + id + '.why')]));
       wrap.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('how') + ' ' }), t('info.' + id + '.how'),
         el('span', { class: 'draft', text: t('draft') })]));
@@ -205,11 +205,13 @@
       g.setAttribute('aria-label', t('region.' + g.getAttribute('data-region') + '.title'));
     });
     var sel = $('lang'); if (sel) sel.value = I18n.get();
+    if (window.Panels && Panels.relabel) Panels.relabel(t);
+    if (window.Pwa) Pwa.relabel();
   }
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 
@@ -223,7 +225,7 @@
 
   function render() {
     assessment = withImmune(Core.assess(entries()));
-    applyStatic(); updateFormLabels(); updateFlightLabels(); updateImmuneLabels();
+    applyStatic(); updateFormLabels(); updateMissionLabels(); updateFlightLabels(); updateImmuneLabels();
     renderTabs(); renderUsers();
     renderBadge(); renderOverall(); renderBody(); renderDetail();
     if (state.tab === 'dash') {
@@ -232,7 +234,7 @@
       Views.renderImmuneOwn(ctx(), $('immune-summary'), store.immuneOf(store.current()));
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
-    if (state.tab === 'osdr') Views.renderOsdr(ctx(), $('osdr'));
+    if (state.tab === 'osdr') { Views.renderInspirations(ctx(), $('inspiration')); Views.renderOsdr(ctx(), $('osdr')); Views.renderOsd635(ctx(), $('o635')); Views.renderOsd569(ctx(), $('o569')); }
     if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup }); }
     if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }
@@ -277,9 +279,17 @@
     var f = $('checkin'); f.innerHTML = '';
     var today = new Date().toISOString().slice(0, 10);
     f.appendChild(el('label', { class: 'full' }, [el('span', { 'data-i18n': 'fDate', text: t('fDate') }), el('input', { type: 'date', name: 'date', value: today, required: 'required' })]));
-    Core.INDICATORS.forEach(function (ind) {
-      f.appendChild(el('label', null, [el('span', { 'data-ind': ind.id, text: indLabel(ind) + ' (' + unitOf(ind) + ')' }),
-        el('input', { type: 'number', name: ind.id, step: String(ind.step), min: String(ind.min), max: String(ind.max), inputmode: 'decimal' })]));
+    // one collapsible group per body region, so the long list stays easy to scan
+    Object.keys(Content.REGIONS).forEach(function (rid) {
+      var inds = Core.INDICATORS.filter(function (i) { return i.region === rid; });
+      if (!inds.length) return;
+      var g = el('details', { class: 'fgroup full', open: 'open' }, [el('summary', { 'data-i18n': 'region.' + rid + '.title', text: t('region.' + rid + '.title') })]);
+      var grid = el('div', { class: 'fgrid' });
+      inds.forEach(function (ind) {
+        grid.appendChild(el('label', null, [el('span', { 'data-ind': ind.id, text: indLabel(ind) + ' (' + unitOf(ind) + ')' }),
+          el('input', { type: 'number', name: ind.id, step: String(ind.step), min: String(ind.min), max: String(ind.max), inputmode: 'decimal' })]));
+      });
+      g.appendChild(grid); f.appendChild(g);
     });
     f.appendChild(el('button', { type: 'submit', 'data-i18n': 'save', text: t('save') }));
     f.addEventListener('submit', function (ev) {
@@ -290,9 +300,71 @@
       if (!store.current()) { msg.className = 'form-msg err'; msg.textContent = t('users.needUser'); return; }
       if (!v.ok) { msg.className = 'form-msg err'; msg.textContent = errText(v); return; }
       store.saveEntry(store.current(), v.entry); // one entry per date: replaced if it exists
+      if (window.Pwa) Pwa.checkedIn(v.entry.date);
       msg.className = 'form-msg good'; msg.textContent = t('savedFor', { date: v.entry.date });
       state.mode = 'manual'; render();
     });
+  }
+
+
+  /* ---------- customizable pre-/post-flight periods ---------- */
+  // A time point is "before launch" (L-<days>) or "after return" (R+<days>); the person types any number of days, or picks a date
+  // and the selected user's mission dates are used to work it out. The hidden input "tp" carries the label.
+  function buildTpChooser(prefix) {
+    var hidden = el('input', { type: 'hidden', name: 'tp' });
+    var phase = el('select', { 'data-tp': prefix + '-phase', 'aria-label': t('tp.phase') });
+    ['pre', 'post'].forEach(function (p) { phase.appendChild(el('option', { value: p, text: '' })); });
+    phase.value = 'post';
+    var days = el('input', { type: 'number', min: '0', max: String(Mission.MAX_DAYS), step: '1', inputmode: 'numeric', value: '1', 'data-tp': prefix + '-days', 'aria-label': t('tp.days') });
+    var date = el('input', { type: 'date', 'data-tp': prefix + '-date', 'aria-label': t('tp.date') });
+    var out = el('small', { class: 'meta', 'data-tp': prefix + '-out', 'aria-live': 'polite' });
+    function sync() { var tp = Mission.makeTp(phase.value, days.value); hidden.value = tp || ''; out.textContent = tp ? t('tp.result', { tp: tp, group: t('fl.group.' + phase.value) }) : t('tp.invalid'); }
+    date.addEventListener('change', function () {
+      var r = Mission.tpFromDate(date.value, store.missionOf(store.current()));
+      if (!r) { out.textContent = t('tp.needDates'); return; }
+      if (r.phase === 'flight') { out.textContent = t('tp.inflight', { days: r.days }); hidden.value = ''; return; }
+      phase.value = r.phase; days.value = String(r.days); sync();
+    });
+    phase.addEventListener('change', sync); days.addEventListener('input', sync);
+    sync();
+    var wrapEl = el('div', { class: 'full tpchooser' }, [
+      el('span', { 'data-tp': prefix + '-lab', class: 'tplab' }),
+      el('div', { class: 'tprow' }, [phase, days, el('span', { 'data-tp': prefix + '-unit', class: 'meta' })]),
+      el('label', null, [el('span', { 'data-tp': prefix + '-datelab' }), date]), out, hidden]);
+    wrapEl.sync = sync;
+    return wrapEl;
+  }
+  function relabelTpChooser(f, prefix) {
+    var q = function (k) { return f.querySelector('[data-tp="' + prefix + '-' + k + '"]'); };
+    q('lab').textContent = t('osdr.tp'); q('unit').textContent = t('tp.unit'); q('datelab').textContent = t('tp.date');
+    var ph = q('phase'); ph.options[0].textContent = t('tp.pre'); ph.options[1].textContent = t('tp.post');
+    ph.setAttribute('aria-label', t('tp.phase')); q('days').setAttribute('aria-label', t('tp.days'));
+    f.querySelector('.tpchooser').sync();
+  }
+
+  function buildMissionForm() {
+    var f = $('missionform'); f.innerHTML = '';
+    f.appendChild(el('label', null, [el('span', { 'data-ms': 'launch' }), el('input', { type: 'date', name: 'launch' })]));
+    f.appendChild(el('label', null, [el('span', { 'data-ms': 'ret' }), el('input', { type: 'date', name: 'ret' })]));
+    f.appendChild(el('label', { class: 'full' }, [el('span', { 'data-ms': 'minPre' }), el('input', { type: 'number', name: 'minPre', min: '1', max: '10', step: '1', value: '3', inputmode: 'numeric' }), el('small', { class: 'meta', 'data-ms': 'minPreHint' })]));
+    f.appendChild(el('button', { type: 'submit', 'data-ms': 'save' }));
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var msg = $('mission-msg'), raw = {};
+      Array.prototype.forEach.call(f.elements, function (i) { if (i.name) raw[i.name] = i.value; });
+      if (!store.current()) { msg.className = 'form-msg err'; msg.textContent = t('users.needUser'); return; }
+      var r = store.saveMission(store.current(), raw);
+      if (!r.ok) { msg.className = 'form-msg err'; msg.textContent = t('ms.err.' + r.code); return; }
+      msg.className = 'form-msg good'; msg.textContent = t('ms.saved'); render();
+    });
+  }
+  function updateMissionLabels() {
+    var f = $('missionform'), m = store.missionOf(store.current());
+    var set = function (k, txt) { f.querySelector('[data-ms="' + k + '"]').textContent = txt; };
+    set('launch', t('ms.launch')); set('ret', t('ms.return')); set('minPre', t('ms.minPre')); set('minPreHint', t('ms.minPreHint')); set('save', t('ms.save'));
+    // show the selected user's saved values (only when the user changes, so typing is not overwritten)
+    var key = store.current() + '|' + JSON.stringify(m);
+    if (f.getAttribute('data-shown') !== key) { f.elements.launch.value = m.launch || ''; f.elements.ret.value = m.ret || ''; f.elements.minPre.value = String(m.minPre); f.setAttribute('data-shown', key); }
   }
 
   /* ---------- pre-/post-flight form (rules: Osdr) ---------- */
@@ -304,11 +376,7 @@
   }
   function buildFlightForm() {
     var f = $('flightform'); f.innerHTML = '';
-    var selTp = el('select', { name: 'tp', required: 'required' });
-    var gPre = el('optgroup', { 'data-fl-group': 'pre' }), gPost = el('optgroup', { 'data-fl-group': 'post' });
-    Osdr.TIMEPOINTS.forEach(function (tp) { (Osdr.groupOf(tp) === 'pre' ? gPre : gPost).appendChild(el('option', { value: tp, text: tp })); });
-    selTp.appendChild(gPre); selTp.appendChild(gPost); selTp.value = Osdr.TIMEPOINTS[Osdr.PRE];
-    f.appendChild(el('label', { class: 'full' }, [el('span', { 'data-fl': 'tp' }), selTp]));
+    f.appendChild(buildTpChooser('fl'));
     Object.keys(Osdr.ANALYTES).forEach(function (a) {
       var an = Osdr.ANALYTES[a];
       f.appendChild(el('label', null, [el('span', { 'data-fl-a': a }),
@@ -330,8 +398,7 @@
   }
   function updateFlightLabels() {
     var f = $('flightform');
-    Array.prototype.forEach.call(f.querySelectorAll('[data-fl-group]'), function (g) { g.setAttribute('label', t('fl.group.' + g.getAttribute('data-fl-group'))); });
-    f.querySelector('[data-fl="tp"]').textContent = t('osdr.tp');
+    relabelTpChooser(f, 'fl');
     f.querySelector('[data-fl="save"]').textContent = t('fl.save');
     Array.prototype.forEach.call(f.querySelectorAll('[data-fl-a]'), function (s) {
       var a = s.getAttribute('data-fl-a'); s.textContent = t('osdr.a.' + a) + ' (' + Osdr.ANALYTES[a].unit + ')';
@@ -350,11 +417,7 @@
   }
   function buildImmuneForm() {
     var f = $('immuneform'); f.innerHTML = '';
-    var selTp = el('select', { name: 'tp', required: 'required' });
-    var gPre = el('optgroup', { 'data-im-group': 'pre' }), gPost = el('optgroup', { 'data-im-group': 'post' });
-    Immune.TIMEPOINTS.forEach(function (tp) { (Osdr.groupOf(tp) === 'pre' ? gPre : gPost).appendChild(el('option', { value: tp, text: tp })); });
-    selTp.appendChild(gPre); selTp.appendChild(gPost); selTp.value = Immune.TIMEPOINTS[Immune.PRE];
-    f.appendChild(el('label', { class: 'full' }, [el('span', { 'data-im': 'tp' }), selTp]));
+    f.appendChild(buildTpChooser('im'));
     Object.keys(Immune.ANALYTES).forEach(function (a) {
       var an = Immune.ANALYTES[a];
       f.appendChild(el('label', null, [el('span', { 'data-im-a': a }),
@@ -376,8 +439,7 @@
   }
   function updateImmuneLabels() {
     var f = $('immuneform');
-    Array.prototype.forEach.call(f.querySelectorAll('[data-im-group]'), function (g) { g.setAttribute('label', t('fl.group.' + g.getAttribute('data-im-group'))); });
-    f.querySelector('[data-im="tp"]').textContent = t('osdr.tp');
+    relabelTpChooser(f, 'im');
     f.querySelector('[data-im="save"]').textContent = t('fl.save');
     Array.prototype.forEach.call(f.querySelectorAll('[data-im-a]'), function (s) { s.textContent = t('o9.a.' + s.getAttribute('data-im-a')); });
     Array.prototype.forEach.call(f.querySelectorAll('[data-im-lab]'), function (s) {
@@ -392,8 +454,12 @@
     I18n.LANGS.forEach(function (l) { sel.appendChild(el('option', { value: l.code, text: l.name })); });
     sel.addEventListener('change', function () { I18n.set(sel.value); $('form-msg').textContent = ''; $('flight-msg').textContent = ''; $('immune-msg').textContent = ''; render(); });
     buildForm();
+    buildMissionForm();
     buildFlightForm();
     buildImmuneForm();
+    Panels.init({ t: t });
+    if (window.Pwa) Pwa.init({ t: t, lang: function () { return I18n.get(); } });
+    $('layout-reset').addEventListener('click', function () { Panels.reset(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) {
       b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
     });

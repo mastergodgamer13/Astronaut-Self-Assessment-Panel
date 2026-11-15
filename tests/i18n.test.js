@@ -1,14 +1,42 @@
 // Run: node tests/i18n.test.js
 const assert = require('assert');
 const I18n = require('../js/i18n.js');
+global.I18n = I18n;
+const PARTIAL = ['fr', 'de', 'ru', 'ja', 'zh'];
+PARTIAL.forEach(c => require('../js/lang/' + c + '.js'));
 const Content = require('../js/content.js');
 const Core = require('../js/core.js');
 let n = 0;
 function test(name, fn) { fn(); n++; console.log('ok -', name); }
-const codes = I18n.LANGS.map(l => l.code);
+const allCodes = I18n.LANGS.map(l => l.code);
+const codes = ['en', 'tr', 'it', 'es']; // complete translations
 const ph = s => (s.match(/\{\w+\}/g) || []).sort().join(',');
 
-test('four languages: en tr it es', () => assert.deepStrictEqual(codes, ['en', 'tr', 'it', 'es']));
+test('languages: four complete (en tr it es) and five core-interface (fr de ru ja zh)', () => assert.deepStrictEqual(allCodes, ['en', 'tr', 'it', 'es'].concat(PARTIAL)));
+test('partial languages: same key set, only keys English has, placeholders match, none empty, safety texts present', () => {
+  const ref = Object.keys(I18n.DICT.ru).sort();
+  PARTIAL.forEach(c => {
+    const D = I18n.DICT[c];
+    assert.deepStrictEqual(Object.keys(D).sort(), ref, c);
+    ref.forEach(k => {
+      assert.ok(I18n.DICT.en[k] !== undefined, c + ' extra ' + k);
+      assert.ok(D[k].trim().length > 0, c + ' empty ' + k);
+      assert.strictEqual(ph(D[k]), ph(I18n.DICT.en[k]), c + ':' + k);
+    });
+    ['bannerStrong', 'bannerText', 'msg.ok', 'msg.watch', 'msg.attention', 'msg.nodata', 'cu.disclaimer', 'cu.result.red', 'cu.result.yellow', 'act.callSurgeon', 'act.stopActivity', 'remind.title', 'net.offline']
+      .forEach(k => assert.ok(D[k], c + ' safety key ' + k));
+    ['ok', 'watch', 'attention', 'nodata'].forEach(x => assert.ok(D['status.' + x], c + ' status ' + x));
+    require('../js/core.js').INDICATORS.forEach(i => assert.ok(D['ind.' + i.id], c + ' indicator ' + i.id));
+    assert.ok(require('../js/remind.js').TEXT[c], c + ' notification text');
+  });
+});
+test('untranslated keys fall back to English, translated ones do not', () => {
+  assert.strictEqual(I18n.set('fr'), true);
+  const untranslated = Object.keys(I18n.DICT.en).find(k => I18n.DICT.fr[k] === undefined);
+  assert.strictEqual(I18n.t(untranslated), I18n.DICT.en[untranslated]);
+  assert.strictEqual(I18n.t('cu.yes'), 'Oui');
+  I18n.set('en');
+});
 codes.forEach(c => test('no missing/extra keys in ' + c, () => {
   const d = I18n.diff(c);
   assert.deepStrictEqual(d.missing, []); assert.deepStrictEqual(d.extra, []);

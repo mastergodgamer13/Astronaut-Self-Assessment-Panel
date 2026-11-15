@@ -4,9 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astronot Self Check — NASA Space Apps 2026 prototype</title>
-  <link rel="stylesheet" href="css/style.css?v=20261115b">
+  <meta name="theme-color" content="#0a0f18">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css?v=20261115g">
 </head>
 <body>
+  <div id="net-banner" class="net-banner" role="status" hidden></div>
   <header class="top">
     <div class="brand">
       <svg class="logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -22,6 +26,7 @@
       </div>
     </div>
     <div class="top-right">
+      <button id="layout-reset" type="button" class="ghost" data-i18n="panel.reset">Reset layout</button>
       <label class="lang"><span class="sr-only" data-i18n="langLabel">Language</span><select id="lang"></select></label>
     </div>
   </header>
@@ -37,18 +42,18 @@
     <button class="tab active" role="tab" aria-selected="true" data-tab="checkup" data-i18n="tabCheckup">Guided check-up</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="dash" data-i18n="tabDash">Dashboard</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="compare" data-i18n="tabCompare">Compare users</button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="osdr" data-i18n="tabOsdr">Real data (NASA OSDR)</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="osdr" data-i18n="tabOsdr">Inspirations</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="live" data-i18n="tabLive">Live NASA catalog</button>
   </nav>
 
   <div id="view-dash">
   <main class="console">
-    <aside class="rail rail-left" aria-label="Users and data entry">
+    <aside class="rail rail-left" aria-label="Users and data entry" data-zone="left" data-zone-group="dash">
       <div class="toolbar">
         <span id="source-badge" class="badge man"></span>
       </div>
 
-      <section class="card" aria-labelledby="h-users">
+      <section class="card" aria-labelledby="h-users" data-panel="users" data-panel-title="users.title">
         <h2 id="h-users" data-i18n="users.title">Users</h2>
         <p class="hint" data-i18n="users.hint">Add each person (for example each team member), select them, then enter their values. Data stays in this browser.</p>
         <p id="user-none" class="empty" data-i18n="users.none">No user yet. Add a user to start entering values.</p>
@@ -63,7 +68,7 @@
         <div id="user-msg" role="status" class="form-msg"></div>
       </section>
 
-      <section class="card" aria-labelledby="h-checkin">
+      <section class="card" aria-labelledby="h-checkin" data-panel="checkin" data-panel-title="checkin">
         <h2 id="h-checkin" data-i18n="checkin">Daily check-in</h2>
         <p class="hint" data-i18n="checkinHint">Leave a field empty if you did not measure it. Entries are stored only in this browser.</p>
         <form id="checkin" novalidate></form>
@@ -71,7 +76,32 @@
         <button id="clear-manual" class="link" type="button" data-i18n="clear">Delete my entries</button>
       </section>
 
-      <section class="card" aria-labelledby="h-flight">
+      <section class="card" aria-labelledby="h-mission" data-panel="mission" data-panel-title="ms.title">
+        <h2 id="h-mission" data-i18n="ms.title">Mission periods</h2>
+        <p class="hint" data-i18n="ms.hint">hint</p>
+        <form id="missionform" novalidate></form>
+        <div id="mission-msg" role="alert" class="form-msg"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-remind" data-panel="remind" data-panel-title="remind.title">
+        <h2 id="h-remind" data-rt="remind.title">Reminders</h2>
+        <p class="hint" data-rt="remind.hint">hint</p>
+        <form id="remindform" novalidate>
+          <label class="check"><input type="checkbox" name="enabled"> <span data-rt="remind.enable">Remind me every day</span></label>
+          <label><span data-rt="remind.time">Time</span><input type="time" name="time" value="08:00"></label>
+          <details class="fgroup"><summary data-rt="remind.advanced">Advanced</summary>
+            <label><span data-rt="remind.relay">Service</span><input type="url" name="relay" autocomplete="off" placeholder="https://"></label>
+            <label><span data-rt="remind.vapid">Key</span><input type="text" name="vapid" autocomplete="off"></label>
+          </details>
+          <div class="btnrow"><button class="primary" type="submit" data-rt="remind.save">Save reminders</button>
+          <button type="button" id="remind-test" data-rt="remind.test">Send a test notification</button>
+          <button type="button" id="remind-install" hidden>Install app</button></div>
+        </form>
+        <p id="remind-ios" class="hint"></p>
+        <div id="remind-msg" role="status" class="form-msg"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-flight" data-panel="flight" data-panel-title="fl.title">
         <h2 id="h-flight" data-i18n="fl.title">Pre-flight / post-flight values</h2>
         <p class="hint" data-i18n="fl.hint">Enter a laboratory value for one time point of the selected user. Time points and analytes follow the NASA OSD-575 dataset.</p>
         <form id="flightform" novalidate></form>
@@ -80,7 +110,7 @@
         <button id="clear-flight" class="link" type="button" data-i18n="fl.clear">Delete my pre-/post-flight values</button>
       </section>
 
-      <section class="card" aria-labelledby="h-immune">
+      <section class="card" aria-labelledby="h-immune" data-panel="immune" data-panel-title="im.title">
         <h2 id="h-immune" data-i18n="im.title">Immune cells (blood count)</h2>
         <p class="hint" data-i18n="im.hint">hint</p>
         <form id="immuneform" novalidate></form>
@@ -90,11 +120,11 @@
       </section>
     </aside>
 
-    <section class="stage" aria-labelledby="h-body">
+    <div class="rail rail-mid" data-zone="mid" data-zone-group="dash"><section class="stage" aria-labelledby="h-body" data-panel="body" data-panel-title="bodyMap">
       <h2 id="h-body" data-i18n="bodyMap">Body map</h2>
       <p class="hint" data-i18n="bodyHint">Select a region. Grey = not enough data or no indicator yet.</p>
       <div class="bodywrap">
-        <svg id="body" viewBox="0 0 440 452" role="group" aria-label="Clickable body map" data-i18n-aria="bodyAria">
+        <svg id="body" viewBox="0 0 500 452" role="group" aria-label="Clickable body map" data-i18n-aria="bodyAria">
           <defs>
             <radialGradient id="halo" cx="0.5" cy="0.45" r="0.55"><stop offset="0" stop-color="#7cc4ff" stop-opacity="0.16"/><stop offset="1" stop-color="#7cc4ff" stop-opacity="0"/></radialGradient>
             <linearGradient id="scanfade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7cc4ff" stop-opacity="0"/><stop offset="0.5" stop-color="#7cc4ff" stop-opacity="0.9"/><stop offset="1" stop-color="#7cc4ff" stop-opacity="0"/></linearGradient>
@@ -152,45 +182,61 @@
         <ul id="region-list" class="region-list"></ul>
       </div>
     </section>
+    </div>
 
-    <aside class="rail rail-right" aria-label="Analysis">
-      <section class="card summary" aria-live="polite">
+    <aside class="rail rail-right" aria-label="Analysis" data-zone="right" data-zone-group="dash">
+      <section class="card summary" aria-live="polite" data-panel="summary" data-panel-title="panel.summary">
         <div id="overall" class="overall"></div>
       </section>
-      <section class="card detail" aria-labelledby="h-detail" aria-live="polite">
+      <section class="card detail" aria-labelledby="h-detail" aria-live="polite" data-panel="detail" data-panel-title="details">
         <h2 id="h-detail" data-i18n="details">Details</h2>
         <div id="detail"><p class="hint">Select a body region to see its indicators.</p></div>
       </section>
     </aside>
   </main>
-  <div class="layout1"><section class="card" id="prepost"></section></div>
+  <div class="layout1" data-zone="bottom" data-zone-group="dash"><section class="card" id="prepost" data-panel="prepost" data-panel-title="panel.prepost"></section></div>
   </div>
 
-  <div id="view-compare" hidden><div class="layout1"><section class="card" id="cmp"></section></div></div>
-  <div id="view-checkup"><div class="layout1"><section class="card" id="checkup"></section></div></div>
-  <div id="view-live" hidden><div class="layout1"><section class="card" id="live"></section></div></div>
-  <div id="view-osdr" hidden><div class="layout1"><section class="card" id="osdr"></section></div></div>
+  <div id="view-compare" hidden><div class="layout1" data-zone="z-cmp"><section class="card" id="cmp" data-panel="cmp" data-panel-title="tabCompare"></section></div></div>
+  <div id="view-checkup"><div class="layout1" data-zone="z-checkup"><section class="card" id="checkup" data-panel="checkup" data-panel-title="tabCheckup"></section></div></div>
+  <div id="view-live" hidden><div class="layout1" data-zone="z-live"><section class="card" id="live" data-panel="live" data-panel-title="tabLive"></section></div></div>
+  <div id="view-osdr" hidden><div class="layout1 stack" data-zone="z-osdr">
+    <section class="card" id="inspiration" data-panel="inspiration" data-panel-title="insp.title"></section>
+    <section class="card" id="osdr" data-panel="osdr" data-panel-title="insp.osd575"></section>
+    <section class="card" id="o569" data-panel="o569" data-panel-title="insp.osd569"></section>
+    <section class="card" id="o635" data-panel="o635" data-panel-title="insp.osd635"></section>
+  </div></div>
 
   <footer>
     <p data-i18n="footer">Draft explanatory texts are not yet verified against NASA HRP sources. Simulated data uses arbitrary, fictional parameters.
        Status levels use configurable statistical cut-offs (|z| ≥ 2 and ≥ 3 relative to your first 7 readings), not clinical thresholds.</p>
   </footer>
 
-  <script src="js/i18n.js?v=20261115b"></script>
-  <script src="js/core.js?v=20261115b"></script>
-  <script src="js/store.js?v=20261115b"></script>
-  <script src="js/osdr.js?v=20261115b"></script>
-  <script src="js/expression.js?v=20261115b"></script>
-  <script src="js/osd635.js?v=20261115b"></script>
-  <script src="js/osd569-data.js?v=20261115b"></script>
-  <script src="js/osd569.js?v=20261115b"></script>
-  <script src="js/live.js?v=20261115b"></script>
-  <script src="js/immune.js?v=20261115b"></script>
-  <script src="js/checkup.js?v=20261115b"></script>
-  <script src="js/charts.js?v=20261115b"></script>
-  <script src="js/demo.js?v=20261115b"></script>
-  <script src="js/content.js?v=20261115b"></script>
-  <script src="js/views.js?v=20261115b"></script>
-  <script src="js/app.js?v=20261115b"></script>
+  <script src="js/i18n.js?v=20261115g"></script>
+  <script src="js/lang/fr.js?v=20261115g"></script>
+  <script src="js/lang/de.js?v=20261115g"></script>
+  <script src="js/lang/ru.js?v=20261115g"></script>
+  <script src="js/lang/ja.js?v=20261115g"></script>
+  <script src="js/lang/zh.js?v=20261115g"></script>
+  <script src="js/core.js?v=20261115g"></script>
+  <script src="js/remind.js?v=20261115g"></script>
+  <script src="js/mission.js?v=20261115g"></script>
+  <script src="js/store.js?v=20261115g"></script>
+  <script src="js/osdr.js?v=20261115g"></script>
+  <script src="js/expression.js?v=20261115g"></script>
+  <script src="js/osd635.js?v=20261115g"></script>
+  <script src="js/osd569-data.js?v=20261115g"></script>
+  <script src="js/osd569.js?v=20261115g"></script>
+  <script src="js/live.js?v=20261115g"></script>
+  <script src="js/immune.js?v=20261115g"></script>
+  <script src="js/crewlive.js?v=20261115g"></script>
+  <script src="js/checkup.js?v=20261115g"></script>
+  <script src="js/panels.js?v=20261115g"></script>
+  <script src="js/charts.js?v=20261115g"></script>
+  <script src="js/demo.js?v=20261115g"></script>
+  <script src="js/content.js?v=20261115g"></script>
+  <script src="js/views.js?v=20261115g"></script>
+  <script src="js/pwa.js?v=20261115g"></script>
+  <script src="js/app.js?v=20261115g"></script>
 </body>
 </html>

@@ -158,3 +158,60 @@ Four more body regions, each with its own indicators and check-up slides (26 sli
 | Digestion | meals eaten today, stomach discomfort 0–3 | |
 
 Grip strength and reaction time are "baseline only": the check-up records them and says so instead of colouring them. All zones are prototype values and need flight-surgeon review. Liver and kidney lab values are not included.
+
+### Equipment-free signs and tools per organ
+
+Nine more signs that need no instrument (35 slides in total). Every slide now says which tool it needs ("Tools you need:").
+
+| Region | Added | Tool |
+|---|---|---|
+| Lungs | shortness of breath, cough, comfortable breath-hold (own baseline only) | clock with seconds; pulse oximeter only for SpO2 |
+| Kidneys & hydration | urinations per day, swelling, body-mass change over a week | mass measurement device for weight only; mirror for swelling |
+| Digestion | nausea, loss of appetite, bowel movements per day | none |
+
+### Reaction time, grip strength and breath-hold now get a colour
+
+These have no universal normal range, so the check-up slide asks for your own usual value (remembered in the browser). Worse than usual by more than 10 % is yellow, by more than 20 % is red (slower reaction, weaker grip, shorter breath-hold). Without a usual value the slide only records the number. On the dashboard they get a colour after 7 daily readings, from your own baseline. Cut-offs are prototype values for flight-surgeon review.
+
+## Real crew values, read live from NASA
+
+On the check-up start screen, **Load real crew values from NASA** reads the Inspiration4 blood-test tables directly from OSDR: OSD-575 `...CMP.upload_SUBMITTED.csv` (metabolic panel) and OSD-569 `...CBC.upload_SUBMITTED.csv` (blood count). Each lab slide then shows the real crew range before flight and on the first day after landing, plus the lab range printed in the NASA file. Code: `js/crewlive.js` (tested with `tests/crewlive.test.js`).
+
+- It needs your relay address (Live NASA tab) and the relay must be the current `worker/osdr-proxy.js`, which forwards `/geode-py/` (file downloads). If it fails, the bundled copies are used.
+- New optional lab slides from the same metabolic panel: creatinine, blood urea nitrogen and eGFR (kidneys), ALT and AST (liver). Their zones are the lab range printed in the NASA file, widened by half its width for yellow (prototype, needs flight-surgeon review). Only 4 crew members, so these ranges describe those 4 people, not all astronauts.
+
+## Movable panels
+
+Every card (users, check-in, pre/post-flight, immune, body map, status, details and each tab's main card) is a panel with a small bar: drag the grip ⠿ to move it (also between columns), use ◀ ▲ ▼ ▶ to move with the keyboard, – to minimize, ⤢ to maximize (Esc closes). The layout is remembered in this browser; **Reset layout** (top right) restores the default. The daily check-in form is now grouped by body region. Code: `js/panels.js`, tests `tests/panels.test.js`.
+
+## Customizable pre-flight and post-flight periods
+
+Each astronaut flies a different schedule, so time points are no longer fixed to the dataset's (L-92, L-44, L-3, R+1 …). A time point is **any number of days (0–3650) before launch (L-<days>) or after return (R+<days>)**. In the forms you type the days, or pick the measurement date and the app works out the time point from the user's own **Mission periods** (launch and return dates, both optional). The same panel sets how many pre-flight values a baseline needs (1–10, default 3). Code: `js/mission.js` (tests: `tests/mission.test.js`).
+
+## Inspirations
+
+The former "Real data" tab is now **Inspirations**: it introduces the three NASA OSDR studies used to gather ideas (OSD-575 blood chemistry, OSD-569 blood count and blood RNA, OSD-635 space flight vs ground gene expression), says which idea each gave this project, and shows each example in its own movable panel with a link to the study page.
+
+## Works offline, and daily reminders
+
+**Offline.** On the first visit the app stores its own files (`sw.js`); afterwards it opens with no connection, your entries stay on the device, and a banner says when you are offline. Live NASA data (Live tab, crew ranges) needs a connection and loads again when you are back online. Change the `CACHE` name in `sw.js` when you ship new files.
+
+**Install.** The app has a manifest and icons, so browsers offer "Install app" (a button also appears in the Reminders panel). On iPhone/iPad, use Share → Add to Home Screen.
+
+**Reminders** (panel "Reminders"; choose a time, allow notifications). Three levels, each honest about its limit:
+1. *App open:* a notification appears at your time if you have not checked in today.
+2. *Installed on Chromium (Android, desktop Chrome/Edge):* the browser may wake the app in the background (periodic background sync). The browser decides how often; it is not exact.
+3. *Fully closed, any device including iOS 16.4+ installed apps:* needs the small relay in `worker/push.mjs`, which you deploy yourself (free Cloudflare plan is enough):
+   ```
+   node tools/make_vapid.mjs                       # prints a public key and a private key
+   npx wrangler kv namespace create SUBS           # put the id into worker/wrangler.push.toml
+   npx wrangler secret put VAPID_PUBLIC            # the public key
+   npx wrangler secret put VAPID_PRIVATE_JWK       # the private JSON
+   npx wrangler secret put VAPID_SUBJECT           # e.g. mailto:you@example.com
+   npx wrangler deploy -c worker/wrangler.push.toml
+   ```
+   Then paste the worker address and the public key in Reminders → advanced. The relay stores only the device's push address, chosen time, time zone and language, never health values, and sends a message with no content; the app shows the text in the user's language. Tests: `node tests/push.test.mjs`.
+
+## Languages
+
+Complete translations: English, Türkçe, Italiano, Español. Core-interface translations (navigation, guided check-up, statuses, self-care actions, body regions, indicators, reminders, offline notice): Français, Deutsch, Русский (Roscosmos), 日本語 (JAXA), 中文 (Tiangong). Anything not translated yet (for example the NASA study pages) shows in English, so nothing is empty. These translations were not reviewed by native-speaking medical staff; please have them checked before real use. To add a language, copy `js/lang/fr.js`, translate the values, add the script tag in `index.html` and the notification text in `js/remind.js`.
