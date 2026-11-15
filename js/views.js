@@ -561,6 +561,13 @@
   }
 
   /* ---------- Live NASA catalog (OSDR API, called from the browser) ---------- */
+  /** Prepares a catalog search (term + results) so the Live tab opens already showing it. */
+  function searchLive(ctx, term, done) {
+    live.term = term; live.res = { loading: true };
+    try { ctx.Live.setBase(window.localStorage.getItem('ll_proxy') || ''); } catch (e) { /* storage blocked */ }
+    ctx.Live.search(function (u) { return window.fetch(u); }, { term: term, human: live.human, size: 50 }).then(function (r) { live.res = r; if (done) done(); });
+    if (done) done();
+  }
   var live = { term: '', human: true, diag: null, res: null, busy: false, proxy: '', open: null, detail: null };
   try { live.proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { live.proxy = ''; }
 
@@ -930,12 +937,27 @@
     var first = slide.querySelector('input'); if (first && !wiz.checked[q.id]) first.focus();
   }
 
+  function todayStr() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+
+  /** Plain-text summary of a finished check-up (for sharing / pasting into a message). */
+  function summaryText(ctx, run) {
+    var t = ctx.t, lines = [t('cu.print.header', { date: todayStr() }), t('status.' + run.overall) + ' — ' + t('cu.result.counts', run.counts), ''];
+    run.sorted.forEach(function (it) {
+      if (it.status === 'nodata') return;
+      lines.push(t('status.' + it.status) + ': ' + wizLabel(ctx, it.q) + ' ' + wizValueText(ctx, it));
+      it.actions.forEach(function (a) { lines.push('  - ' + t('act.' + a)); });
+    });
+    lines.push('', t('cu.disclaimer'));
+    return lines.join('\n');
+  }
+
   function renderWizResult(ctx, box, hooks, go, reset) {
     var t = ctx.t, C = ctx.Checkup, run = C.run(wiz.answers), slide = el('div', { class: 'slide' });
     slide.appendChild(el('h3', { tabindex: '-1', text: t('cu.result.title') }));
     slide.appendChild(el('div', null, [ctx.chip(run.overall)]));
     slide.appendChild(el('p', { class: 'msg', text: t('cu.result.counts', run.counts) }));
     slide.appendChild(el('p', { class: 'msg', text: run.overall === 'attention' ? t('cu.result.red') : run.overall === 'watch' ? t('cu.result.yellow') : run.overall === 'ok' ? t('cu.result.allok') : t('cu.nodata') }));
+    slide.appendChild(el('p', { class: 'meta', text: t('rs.note') }));
     slide.appendChild(el('strong', { text: t('cu.list') }));
     run.sorted.forEach(function (it) {
       var d = el('details', { class: 'wiz-item' });
@@ -943,6 +965,13 @@
       d.appendChild(el('summary', null, [ctx.chip(it.status), ' ', wizLabel(ctx, it.q), ': ', wizValueText(ctx, it)]));
       if (it.actions.length) { var ol = el('ol', { class: 'msg' }); it.actions.forEach(function (a) { ol.appendChild(el('li', { class: a === 'callSurgeon' ? 'act-red' : '', text: t('act.' + a) })); }); d.appendChild(ol); }
       else d.appendChild(el('p', { class: 'meta', text: it.status === 'ok' ? t('cu.okmsg') : t('cu.nodata') }));
+      var rel = (it.status === 'watch' || it.status === 'attention') && ctx.Research ? ctx.Research.forQuestion(it.q) : null;
+      if (rel) {
+        var rb = el('div', { class: 'research noprint' }); rb.appendChild(el('strong', { text: t('rs.title') + ' ' }));
+        rel.studies.forEach(function (s) { rb.appendChild(el('a', { href: s.url, target: '_blank', rel: 'noopener noreferrer', text: t('rs.study', { id: s.id }) + ' — ' + t('rs.why.' + s.id) })); rb.appendChild(document.createTextNode(' ')); });
+        if (rel.term && hooks.openLive) { var sb = el('button', { type: 'button', text: t('rs.search', { term: rel.term }) }); sb.addEventListener('click', function () { hooks.openLive(rel.term); }); rb.appendChild(sb); }
+        d.appendChild(rb);
+      }
       slide.appendChild(d);
     });
     var msg = el('p', { class: 'form-msg', 'aria-live': 'polite', text: wiz.saveMsg });
@@ -954,7 +983,17 @@
     });
     again.addEventListener('click', function () { wiz.i = -1; wiz.demo = false; renderCheckup(ctx, box, hooks); });
     back.addEventListener('click', function () { go(ctx.Checkup.QUESTIONS.length - 1); });
-    slide.appendChild(msg); slide.appendChild(el('div', { class: 'wiz-nav' }, [back, save, again]));
+    var pr = el('button', { type: 'button', text: t('cu.print') }), sh = el('button', { type: 'button', text: t('cu.share') });
+    pr.addEventListener('click', function () { document.body.classList.add('print-checkup'); window.print(); setTimeout(function () { document.body.classList.remove('print-checkup'); }, 500); });
+    sh.addEventListener('click', function () {
+      var text = summaryText(ctx, run);
+      var done = function (k) { msg.className = 'form-msg good'; msg.textContent = t(k); };
+      if (navigator.share) navigator.share({ title: t('cu.print.header', { date: todayStr() }), text: text }).catch(function () { /* cancelled */ });
+      else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done('cu.share.copied'); }, function () { msg.className = 'form-msg err'; msg.textContent = text; });
+      else { msg.className = 'form-msg'; msg.textContent = text; }
+    });
+    slide.insertBefore(el('div', { class: 'printhead' }, [el('strong', { text: t('cu.print.header', { date: todayStr() }) })]), slide.firstChild);
+    slide.appendChild(msg); slide.appendChild(el('div', { class: 'wiz-nav noprint' }, [back, save, pr, sh, again]));
     box.appendChild(slide);
   }
 
@@ -1007,5 +1046,5 @@
     box.appendChild(el('p', { class: 'meta', text: t('rv.note') }));
   }
 
-  root.Views = { renderReview: renderReview, renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+  root.Views = { searchLive: searchLive, renderReview: renderReview, renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -264,3 +264,11 @@ p, li, h2, h3, h4, .meta, .msg, .callout, summary { overflow-wrap: anywhere; }
 .reviewtbl ol { margin: .1rem 0 .4rem 1rem; padding: 0; }
 .changes { margin-top: .5rem; }
 @media print { .noprint { display: none; } .reviewtbl { font-size: 9pt; } .card { break-inside: auto; } }
+
+.printhead { display: none; }
+@media print {
+  body.print-checkup #view-dash, body.print-checkup #view-compare, body.print-checkup #view-osdr, body.print-checkup #view-live, body.print-checkup #view-review,
+  body.print-checkup header.top, body.print-checkup .tabs, body.print-checkup .banner, body.print-checkup .panel-bar, body.print-checkup .tagline { display: none !important; }
+  body.print-checkup .printhead { display: block; margin-bottom: .5rem; }
+  .research { display: none; }
+}

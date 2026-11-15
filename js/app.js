@@ -238,7 +238,7 @@
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Diag: Diag, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Diag: Diag, Research: Research, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 
@@ -262,7 +262,7 @@
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
     if (state.tab === 'osdr') { Views.renderInspirations(ctx(), $('inspiration')); Views.renderOsdr(ctx(), $('osdr')); Views.renderOsd635(ctx(), $('o635')); Views.renderOsd569(ctx(), $('o569')); }
-    if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup }); }
+    if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup, openLive: function (term) { state.tab = 'live'; state.liveDrawn = false; Views.searchLive(ctx(), term, render); } }); }
     if (state.tab === 'review') Views.renderReview(ctx(), $('review'));
     if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }
