@@ -157,5 +157,57 @@
     return box;
   }
 
-  root.Charts = { multiChart: multiChart, legend: legend, color: color, volcano: volcano, divergingBars: divergingBars, classLegend: classLegend, CLS_COLOR: CLS_COLOR };
+  /**
+   * Range chart: where the crew values lie compared with the zones, the lab range and (optionally) your own value.
+   * opt: { zones: {ok:[lo,hi], watch:[lo,hi]} | null, lab: [lo,hi] | null, rows: [{label, lo, hi, color}], marker: {value, label} | null,
+   *        unit, aria, labels: {ok, watch, lab} }
+   */
+  function rangeChart(opt) {
+    var W = 560, L = 14, R = 14, rowH = 34, top = 20, rows = opt.rows.filter(function (r) { return r.lo !== null && r.hi !== null && r.lo !== undefined; });
+    var vals = [];
+    rows.forEach(function (r) { vals.push(r.lo, r.hi); });
+    if (opt.marker && isFinite(opt.marker.value)) vals.push(opt.marker.value);
+    if (opt.lab) vals.push(opt.lab[0], opt.lab[1]);
+    if (opt.zones) vals.push(opt.zones.ok[0], opt.zones.ok[1]);
+    vals = vals.filter(function (v) { return v !== null && isFinite(v); });
+    var svg = svgEl('svg', { class: 'chart rangechart', role: 'img', 'aria-label': opt.aria || '', viewBox: '0 0 ' + W + ' ' + (top + rows.length * rowH + 52) });
+    if (!vals.length) return svg;
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals), pad = (mx - mn || Math.abs(mx) || 1) * 0.25;
+    mn -= pad; mx += pad;
+    function X(v) { return L + (W - L - R) * ((Math.max(mn, Math.min(mx, v)) - mn) / (mx - mn)); }
+    var H = top + rows.length * rowH + 8, b = opt.labels || {};
+    if (opt.zones) {
+      var wz = opt.zones.watch, oz = opt.zones.ok;
+      svg.appendChild(svgEl('rect', { x: X(wz[0]), y: top - 8, width: Math.max(1, X(wz[1]) - X(wz[0])), height: H - top + 8, fill: '#f4e04d', opacity: '0.16' }));
+      svg.appendChild(svgEl('rect', { x: X(oz[0]), y: top - 8, width: Math.max(1, X(oz[1]) - X(oz[0])), height: H - top + 8, fill: '#3ddc97', opacity: '0.22' }));
+    }
+    if (opt.lab) [opt.lab[0], opt.lab[1]].forEach(function (v) { if (v !== null && isFinite(v)) svg.appendChild(svgEl('line', { x1: X(v), x2: X(v), y1: top - 8, y2: H, stroke: '#d9e2f2', 'stroke-width': 1.5, 'stroke-dasharray': '5 3' })); });
+    rows.forEach(function (r, i) {
+      var y = top + i * rowH, x1 = X(r.lo), x2 = X(r.hi);
+      svg.appendChild(svgEl('text', { x: L + 4, y: y - 1, fill: '#c9d6ee', 'font-size': 11, stroke: '#0b1220', 'stroke-width': 3, 'paint-order': 'stroke' }, r.label + ': ' + r.lo + (r.hi !== r.lo ? '–' + r.hi : '') + (opt.unit ? ' ' + opt.unit : '')));
+      if (r.hi - r.lo < (mx - mn) * 0.01) svg.appendChild(svgEl('circle', { cx: x1, cy: y + 10, r: 6, fill: r.color }));
+      else svg.appendChild(svgEl('rect', { x: x1, y: y + 4, width: Math.max(3, x2 - x1), height: 12, rx: 6, fill: r.color }));
+    });
+    if (opt.marker && isFinite(opt.marker.value)) {
+      var mxp = X(opt.marker.value);
+      svg.appendChild(svgEl('path', { d: 'M' + mxp + ' ' + (top - 8) + ' L' + (mxp - 6) + ' ' + (top - 18) + ' L' + (mxp + 6) + ' ' + (top - 18) + ' Z', fill: '#ffffff' }));
+      svg.appendChild(svgEl('line', { x1: mxp, x2: mxp, y1: top - 8, y2: H, stroke: '#ffffff', 'stroke-width': 2 }));
+      svg.appendChild(svgEl('text', { x: Math.min(Math.max(mxp, 30), W - 30), y: H + 14, fill: '#ffffff', 'font-size': 12, 'font-weight': 700, 'text-anchor': 'middle' }, (opt.marker.label || '') + ' ' + opt.marker.value));
+    }
+    // axis end labels, then a text legend (colour is never the only cue)
+    svg.appendChild(svgEl('text', { x: L, y: H + 14, fill: '#6f7f9c', 'font-size': 10 }, fmtNum(mn, mn % 1 ? 1 : 0)));
+    svg.appendChild(svgEl('text', { x: W - R, y: H + 14, fill: '#6f7f9c', 'font-size': 10, 'text-anchor': 'end' }, fmtNum(mx, mx % 1 ? 1 : 0)));
+    var items = [];
+    if (opt.zones) items.push(['#3ddc97', b.ok || 'usual'], ['#f4e04d', b.watch || 'watch']);
+    if (opt.lab) items.push(['#d9e2f2', b.lab || 'lab range']);
+    var lx = L;
+    items.forEach(function (it) {
+      svg.appendChild(svgEl('rect', { x: lx, y: H + 24, width: 10, height: 10, fill: it[0], opacity: '0.8' }));
+      svg.appendChild(svgEl('text', { x: lx + 14, y: H + 33, fill: '#9fb0cc', 'font-size': 11 }, it[1]));
+      lx += 22 + it[1].length * 6.2;
+    });
+    return svg;
+  }
+
+  root.Charts = { multiChart: multiChart, rangeChart: rangeChart, legend: legend, color: color, volcano: volcano, divergingBars: divergingBars, classLegend: classLegend, CLS_COLOR: CLS_COLOR };
 })(typeof window !== 'undefined' ? window : globalThis);
