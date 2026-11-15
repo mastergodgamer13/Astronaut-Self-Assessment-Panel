@@ -19,15 +19,26 @@
     { id: 'sleep', kind: 'vital', organ: 'mind' }, { id: 'mood', kind: 'vital', organ: 'mind' }, { id: 'headache', kind: 'vital', organ: 'mind' },
     { id: 'reaction', kind: 'vital', organ: 'mind' }, { id: 'dizzy', kind: 'symptom', organ: 'mind' }, { id: 'vision', kind: 'symptom', organ: 'mind' },
     { id: 'urine', kind: 'vital', organ: 'kidneys' }, { id: 'fluids', kind: 'vital', organ: 'kidneys' },
-    { id: 'urinations', kind: 'vital', organ: 'kidneys' }, { id: 'swelling', kind: 'vital', organ: 'kidneys' }, { id: 'wtchange', kind: 'vital', organ: 'kidneys' }, { id: 'flank', kind: 'symptom', organ: 'kidneys' },
+    { id: 'urinations', kind: 'vital', organ: 'kidneys' },
+    { id: 'creatinine', kind: 'lab', panel: 'cmp', organ: 'kidneys' }, { id: 'bun', kind: 'lab', panel: 'cmp', organ: 'kidneys' }, { id: 'egfr', kind: 'lab', panel: 'cmp', organ: 'kidneys' }, { id: 'swelling', kind: 'vital', organ: 'kidneys' }, { id: 'wtchange', kind: 'vital', organ: 'kidneys' }, { id: 'flank', kind: 'symptom', organ: 'kidneys' },
     { id: 'meals', kind: 'vital', organ: 'gut' }, { id: 'discomfort', kind: 'vital', organ: 'gut' },
     { id: 'nausea', kind: 'vital', organ: 'gut' }, { id: 'appetite', kind: 'vital', organ: 'gut' }, { id: 'stools', kind: 'vital', organ: 'gut' },
+    { id: 'alt', kind: 'lab', panel: 'cmp', organ: 'liver' }, { id: 'ast', kind: 'lab', panel: 'cmp', organ: 'liver' },
     { id: 'glucose', kind: 'vital', organ: 'metabolism' }, { id: 'temp', kind: 'vital', organ: 'whole' },
     { id: 'exercise', kind: 'vital', organ: 'bones' }, { id: 'grip', kind: 'vital', organ: 'bones' },
     { id: 'pain', kind: 'symptom', organ: 'bones' }, { id: 'fatigue', kind: 'symptom', organ: 'bones' },
     { id: 'emergency', kind: 'redflag', organ: null },
     { id: 'wbc', kind: 'lab', organ: 'immune' }, { id: 'neut', kind: 'lab', organ: 'immune' }, { id: 'lymph', kind: 'lab', organ: 'immune' }
   ];
+
+  // Metabolic-panel labs (optional). Lab range = the range printed in the NASA file (OSD-575 CMP); yellow zone = that range widened by half its width (prototype).
+  var CMP = {
+    creatinine: { unit: 'mg/dL', min: 0.1, max: 15, step: 0.01, ok: [0.6, 1.35], watch: [0.4, 1.7] },
+    bun:        { unit: 'mg/dL', min: 1, max: 200, step: 1, ok: [7, 25], watch: [3, 35] },
+    egfr:       { unit: 'mL/min/1.73m²', min: 5, max: 200, step: 1, ok: [60, 200], watch: [45, 200] },
+    alt:        { unit: 'U/L', min: 1, max: 2000, step: 1, ok: [9, 46], watch: [0, 65] },
+    ast:        { unit: 'U/L', min: 1, max: 2000, step: 1, ok: [10, 40], watch: [0, 55] }
+  };
 
   // action ids (texts in i18n 'act.<id>'), by question and direction ('low' / 'high' / 'any')
   var ACTIONS = {
@@ -39,6 +50,11 @@
     sleep:   { low: ['sleepSchedule', 'dimLight', 'noCaffeine', 'relax'], high: ['sleepSchedule', 'tellCrew'] },
     mood:    { low: ['talk', 'exercise', 'sleepSchedule', 'dailyLog'] },
     exercise: { low: ['exercise', 'stretch', 'nutrition', 'dailyLog'] },
+    creatinine: { low: ['drinkMore', 'reportLab'], high: ['drinkMore', 'rest', 'reportLab'] },
+    bun:     { low: ['nutrition', 'reportLab'], high: ['drinkMore', 'rest', 'reportLab'] },
+    egfr:    { any: ['drinkMore', 'rest', 'reportLab'] },
+    alt:     { any: ['rest', 'hydrate', 'reportLab'] },
+    ast:     { any: ['rest', 'hydrate', 'reportLab'] },
     breathhold: { low: ['rest', 'breathe', 'checkAir', 'tellCrew'] },
     reaction: { high: ['rest', 'sleepSchedule', 'hydrate', 'checkAir', 'tellCrew'] },
     grip: { low: ['exercise', 'stretch', 'nutrition', 'tellCrew'] },
@@ -73,11 +89,12 @@
   /** Input limits for a number question (sanity limits only, not clinical). */
   function limits(q) {
     if (q.kind === 'vital') { var i = Core.getIndicator(q.id); return { min: i.min, max: i.max, step: i.step, integer: !!i.integer, unit: i.unit }; }
+    if (q.panel === 'cmp') { var c = CMP[q.id]; return { min: c.min, max: c.max, step: c.step, integer: false, unit: c.unit }; }
     if (q.kind === 'lab') { var a = Immune.ANALYTES[q.id], l = Immune.LIMITS[q.id]; return { min: l.min, max: l.max, step: a.decimals ? 0.1 : 1, integer: false, unit: a.unit }; }
     return null;
   }
 
-  function zonesOf(q) { return q.kind === 'vital' ? Core.REFERENCE[q.id] || null : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
+  function zonesOf(q) { return q.panel === 'cmp' ? { ok: CMP[q.id].ok, watch: CMP[q.id].watch } : q.kind === 'vital' ? Core.REFERENCE[q.id] || null : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
 
   /**
    * Parse and check one raw answer.

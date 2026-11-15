@@ -172,3 +172,10 @@ Nine more signs that need no instrument (35 slides in total). Every slide now sa
 ### Reaction time, grip strength and breath-hold now get a colour
 
 These have no universal normal range, so the check-up slide asks for your own usual value (remembered in the browser). Worse than usual by more than 10 % is yellow, by more than 20 % is red (slower reaction, weaker grip, shorter breath-hold). Without a usual value the slide only records the number. On the dashboard they get a colour after 7 daily readings, from your own baseline. Cut-offs are prototype values for flight-surgeon review.
+
+## Real crew values, read live from NASA
+
+On the check-up start screen, **Load real crew values from NASA** reads the Inspiration4 blood-test tables directly from OSDR: OSD-575 `...CMP.upload_SUBMITTED.csv` (metabolic panel) and OSD-569 `...CBC.upload_SUBMITTED.csv` (blood count). Each lab slide then shows the real crew range before flight and on the first day after landing, plus the lab range printed in the NASA file. Code: `js/crewlive.js` (tested with `tests/crewlive.test.js`).
+
+- It needs your relay address (Live NASA tab) and the relay must be the current `worker/osdr-proxy.js`, which forwards `/geode-py/` (file downloads). If it fails, the bundled copies are used.
+- New optional lab slides from the same metabolic panel: creatinine, blood urea nitrogen and eGFR (kidneys), ALT and AST (liver). Their zones are the lab range printed in the NASA file, widened by half its width for yellow (prototype, needs flight-surgeon review). Only 4 crew members, so these ranges describe those 4 people, not all astronauts.
