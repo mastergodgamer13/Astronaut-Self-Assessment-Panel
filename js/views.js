@@ -849,7 +849,7 @@
   function renderCheckup(ctx, box, hooks) {
     var t = ctx.t, C = ctx.Checkup, N = C.QUESTIONS.length;
     box.innerHTML = '';
-    function go(i) { wiz.i = i; wiz.err = ''; renderCheckup(ctx, box, hooks); var h = box.querySelector('h3'); if (h) h.focus(); }
+    function go(i) { wiz.dir = i < wiz.i ? 'back' : 'fwd'; wiz.i = i; wiz.err = ''; renderCheckup(ctx, box, hooks); var h = box.querySelector('h3'); if (h) h.focus(); }
     function reset(demo) { wiz.answers = demo ? ctx.Demo.guided() : {}; wiz.checked = {}; wiz.demo = demo; wiz.saveMsg = ''; go(0); }
 
     box.appendChild(el('h2', { text: t('cu.title') }));
@@ -884,14 +884,17 @@
 
     // progress
     var pct = Math.round(Math.min(wiz.i, N) / N * 100);
-    box.appendChild(el('div', { class: 'meta', text: wiz.i < N ? t('cu.progress', { n: wiz.i + 1, total: N }) : t('cu.result.title') }));
+    var head = el('div', { class: 'wiz-head' });
+    if (window.Orbit) head.appendChild(Orbit.progress(Math.min(wiz.i, N) / N, String(Math.min(wiz.i + 1, N))));
+    head.appendChild(el('div', { class: 'meta', text: wiz.i < N ? t('cu.progress', { n: wiz.i + 1, total: N }) : t('cu.result.title') }));
+    box.appendChild(head);
     var bar = el('div', { class: 'wiz-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(pct) }, [el('span', { style: 'width:' + pct + '%' })]);
     box.appendChild(bar);
     if (wiz.demo) box.appendChild(el('div', { class: 'meta', text: t('cu.demoNote') }));
 
     if (wiz.i >= N) { renderWizResult(ctx, box, hooks, go, reset); return; }
 
-    var q = C.QUESTIONS[wiz.i], slide = el('form', { class: 'slide', novalidate: 'novalidate' });
+    var q = C.QUESTIONS[wiz.i], slide = el('form', { class: 'slide slide-' + (wiz.dir || 'fwd'), novalidate: 'novalidate' });
     if (q.organ) slide.appendChild(el('div', { class: 'meta organ-tag', text: t('region.' + q.organ + '.title') }));
     slide.appendChild(el('h3', { tabindex: '-1', text: q.kind === 'vital' || q.kind === 'lab' ? wizLabel(ctx, q) : t('cu.q.' + q.id + '.ask') }));
     if (q.kind === 'vital' || q.kind === 'lab') slide.appendChild(el('p', { class: 'msg', text: t('cu.enter', { what: wizLabel(ctx, q) }) }));
@@ -912,7 +915,17 @@
     } else {
       var L = C.limits(q), inp = el('input', { type: 'number', name: 'ans', inputmode: 'decimal', step: String(L.step), min: String(L.min), max: String(L.max), 'aria-label': wizLabel(ctx, q) });
       if (cur !== undefined && cur !== '') inp.value = String(cur);
-      slide.appendChild(el('label', null, [inp, ' ', el('span', { text: L.unit })]));
+      var stepBtn = function (sign) {
+        var b = el('button', { type: 'button', class: 'stepper', tabindex: '-1', 'aria-hidden': 'true', text: sign > 0 ? '+' : '\u2212' });
+        b.addEventListener('click', function () {
+          var v = parseFloat(inp.value), st = parseFloat(L.step) || 1, dec = (String(L.step).split('.')[1] || '').length;
+          if (isNaN(v)) { v = parseFloat(wiz.answers['usual_' + q.id]); if (isNaN(v)) v = L.min; sign = 0; }
+          v = Math.min(L.max, Math.max(L.min, v + sign * st)); inp.value = v.toFixed(dec); inp.focus();
+          if (navigator.vibrate) try { navigator.vibrate(8); } catch (e) { /* unsupported */ }
+        });
+        return b;
+      };
+      slide.appendChild(el('label', { class: 'numrow' }, [stepBtn(-1), inp, stepBtn(1), el('span', { class: 'unit', text: L.unit })]));
       read = function () { return inp.value; };
       if (q.id === 'reaction') slide.appendChild(reactionTest(ctx, inp));
       if (!C.zonesOf(q)) { // no fixed normal range: ask for the person's own usual value
@@ -947,6 +960,16 @@
     var nav = el('div', { class: 'wiz-nav' }, [back, skip, main]);
     slide.appendChild(nav);
     box.appendChild(slide);
+    // swipe left = next, swipe right = back (only a clear horizontal gesture; never while typing)
+    var tx = 0, ty = 0, tt = 0;
+    slide.addEventListener('touchstart', function (e) { var p = e.changedTouches[0]; tx = p.clientX; ty = p.clientY; tt = Date.now(); }, { passive: true });
+    slide.addEventListener('touchend', function (e) {
+      var p = e.changedTouches[0], dx = p.clientX - tx, dy = p.clientY - ty;
+      if (Date.now() - tt > 700 || Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.6) return;
+      if (dx > 0) { if (wiz.i > 0) go(wiz.i - 1); } else if (wiz.checked[q.id]) go(wiz.i + 1);
+    }, { passive: true });
+    // light haptic tick when a check lands on something to watch
+    var st0 = wiz.checked[q.id] && fb.querySelector('.chip.attention'); if (st0 && navigator.vibrate) try { navigator.vibrate([30, 40, 30]); } catch (e) { /* unsupported */ }
     var first = slide.querySelector('input'); if (first && !wiz.checked[q.id]) first.focus();
   }
 

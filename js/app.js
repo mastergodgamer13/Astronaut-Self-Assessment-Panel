@@ -140,6 +140,14 @@
   function renderOverall() {
     var c = assessment.counts, box = $('overall');
     box.innerHTML = '';
+    if (window.Orbit) {
+      var segs = Object.keys(Content.REGIONS).map(function (id) { return { id: id, status: regionStatus(id), label: t('region.' + id + '.title') + ': ' + t('status.' + regionStatus(id)) }; });
+      var assessed = assessment.total - c.nodata;
+      var wrap = el('div', { class: 'orbit-wrap', 'data-overall': assessment.overall });
+      wrap.appendChild(Orbit.ring(segs, { overall: assessment.overall, selected: state.region, aria: t('overall.label'),
+        centerTop: t('status.' + assessment.overall), centerBottom: assessed + '/' + assessment.total, onSelect: function (id) { selectRegion(id); } }));
+      box.appendChild(wrap);
+    }
     var line = el('div', null, [chip(assessment.overall), ' ', t('overall.label')]);
     var detail = el('div', { class: 'meta' }, [
       t('overall.counts', { ok: c.ok, watch: c.watch, attention: c.attention, nodata: c.nodata, total: assessment.total }) + ' ' + t('overall.note')
@@ -168,6 +176,10 @@
       var id = g.getAttribute('data-region');
       g.setAttribute('data-status', regionStatus(id));
       g.classList.toggle('selected', state.region === id);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.orbit-seg'), function (g) {
+      g.classList.toggle('selected', state.region === g.getAttribute('data-region'));
+      g.setAttribute('data-status', regionStatus(g.getAttribute('data-region')));
     });
     var list = $('region-list'); list.innerHTML = '';
     Object.keys(Content.REGIONS).forEach(function (id) {
@@ -476,6 +488,7 @@
   }
 
   function init() {
+    if (window.Orbit) Orbit.stars();
     I18n.init();
     store = Store.create(safeStorage(), { legacyName: t('users.legacyName') });
     var sel = $('lang');

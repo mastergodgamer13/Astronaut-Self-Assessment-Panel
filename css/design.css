@@ -92,3 +92,60 @@ html.hc #checkup .opts label { border-color: #fff; }
 html.hc #checkup .opts label:has(input:checked) { background: #fff; color: #000; }
 html.hc #checkup .wiz-fb { background: #000; border: 2px solid #fff; border-left-width: 8px; }
 @media print { body { background: #fff !important; } .display-menu { display: none; } }
+
+/* ===== Orbit: starfield, readiness ring, check-up progress ===== */
+#starfield { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .75; }
+body > header, body > main, body > nav, body > .tabs, body > footer { position: relative; z-index: 1; }
+.orbit-wrap { display: grid; place-items: center; padding: .25rem 0 .75rem; }
+.orbit-ring { width: min(100%, 300px); height: auto; overflow: visible; }
+.orbit-core { fill: rgba(14,20,34,.85); stroke: var(--line); }
+.orbit-halo { fill: none; stroke: var(--line); stroke-dasharray: 1 5; opacity: .5; }
+.orbit-ticks line { stroke: var(--line); stroke-width: 1; }
+.orbit-ring { --c: var(--nodata); }
+.orbit-ring[data-overall=ok] { --c: var(--ok); } .orbit-ring[data-overall=watch] { --c: var(--watch); } .orbit-ring[data-overall=attention] { --c: var(--attention); }
+.orbit-core { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--c) 45%, transparent)); }
+.orbit-top { fill: var(--c); font: 700 17px system-ui, sans-serif; }
+.orbit-bot { fill: var(--muted); font: 600 12px system-ui, sans-serif; }
+.orbit-seg { cursor: pointer; outline: none; --sc: var(--nodata); }
+.orbit-seg[data-status=ok] { --sc: var(--ok); } .orbit-seg[data-status=watch] { --sc: var(--watch); } .orbit-seg[data-status=attention] { --sc: var(--attention); }
+.orbit-hit { fill: none; stroke: transparent; stroke-width: 30; }
+.orbit-arc { fill: none; stroke: var(--sc); stroke-width: 10; stroke-linecap: round; opacity: .9; stroke-dasharray: 100; stroke-dashoffset: 0;
+  transition: stroke-width .2s, filter .2s; animation: orbit-in .9s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 60ms); }
+.orbit-seg[data-status=nodata] .orbit-arc { stroke-dasharray: 3 5; stroke-width: 5; opacity: .6; animation: none; }
+.orbit-dot { fill: var(--bg); stroke: var(--sc); stroke-width: 1.5; }
+.orbit-seg:hover .orbit-arc, .orbit-seg:focus-visible .orbit-arc, .orbit-seg.selected .orbit-arc { stroke-width: 15; filter: drop-shadow(0 0 7px var(--sc)); }
+.orbit-seg:focus-visible .orbit-dot { stroke-width: 3; }
+.orbit-seg[data-status=attention] .orbit-arc { animation: orbit-in .9s both, orbit-pulse 2.4s ease-in-out 1s infinite; }
+@keyframes orbit-in { from { stroke-dashoffset: 100; opacity: 0; } to { stroke-dashoffset: 0; opacity: .9; } }
+@keyframes orbit-pulse { 50% { filter: drop-shadow(0 0 8px var(--attention)); } }
+.orbit-halo { transform-origin: 120px 120px; animation: orbit-spin 90s linear infinite; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+
+.wiz-head { display: flex; align-items: center; gap: .75rem; }
+.orbit-progress { width: 52px; height: 52px; flex: none; }
+.op-track { fill: none; stroke: var(--line); stroke-width: 5; }
+.op-bar { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .5s; }
+.op-sat { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+.op-num { fill: var(--text); font: 700 15px system-ui, sans-serif; }
+#checkup .wiz-bar { display: none; }
+.slide-fwd { animation: slide-fwd .32s cubic-bezier(.2,.8,.2,1); }
+.slide-back { animation: slide-back .32s cubic-bezier(.2,.8,.2,1); }
+@keyframes slide-fwd { from { opacity: 0; transform: translateX(28px); } }
+@keyframes slide-back { from { opacity: 0; transform: translateX(-28px); } }
+.numrow { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.numrow input { flex: 1 1 7rem; min-width: 0; text-align: center; }
+.stepper { width: 56px; height: 56px; border-radius: 50%; font-size: 1.6rem; line-height: 1; padding: 0; flex: none; }
+.numrow .unit { color: var(--muted); }
+
+/* phones: readiness first, then the body, then the people and tools */
+@media (max-width: 700px) {
+  .console .rail-left { order: 3; }
+  .console .rail-right { order: 1; }
+  .console .stage, .console .rail-mid { order: 2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-arc, .orbit-halo, .slide-fwd, .slide-back { animation: none !important; }
+}
+html.hc #starfield { display: none; }
+html.hc .orbit-core { fill: #000; filter: none; }
+@media print { #starfield, .orbit-wrap { display: none; } }
