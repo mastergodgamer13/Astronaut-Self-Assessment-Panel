@@ -178,9 +178,6 @@
       g.setAttribute('data-status', regionStatus(id));
       g.classList.toggle('selected', state.region === id);
     });
-    var bodyEl = $('body'), sel = state.region && bodyEl.querySelector('.region[data-region="' + state.region + '"]');
-    if (sel && sel.getBBox) { var bb = sel.getBBox(), vb = bodyEl.viewBox.baseVal; bodyEl.style.transformOrigin = (((bb.x + bb.width / 2) / vb.width) * 100) + '% ' + (((bb.y + bb.height / 2) / vb.height) * 100) + '%'; bodyEl.classList.add('zoomed'); }
-    else bodyEl.classList.remove('zoomed');
     Array.prototype.forEach.call(document.querySelectorAll('.orbit-seg'), function (g) {
       g.classList.toggle('selected', state.region === g.getAttribute('data-region'));
       g.setAttribute('data-status', regionStatus(g.getAttribute('data-region')));
