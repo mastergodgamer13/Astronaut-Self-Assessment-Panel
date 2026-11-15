@@ -9,9 +9,9 @@ let n = 0;
 function test(name, fn) { fn(); n++; console.log('ok -', name); }
 const Q = id => C.question(id);
 
-test('45 slides: 26 vitals, 9 symptoms, 2 red-flags, 8 labs; every slide has an organ except the red flag', () => {
+test('51 slides: 26 vitals, 9 symptoms, 2 red-flags, 14 labs; every slide has an organ except the red flag', () => {
   const n = k => C.QUESTIONS.filter(q => q.kind === k).length;
-  assert.deepStrictEqual([n('vital'), n('symptom'), n('redflag'), n('lab'), C.QUESTIONS.length], [26, 9, 2, 8, 45]);
+  assert.deepStrictEqual([n('vital'), n('symptom'), n('redflag'), n('lab'), C.QUESTIONS.length], [26, 9, 2, 14, 51]);
 });
 test('parse: numbers with comma, limits, integers, choices, skipped', () => {
   assert.strictEqual(C.parse(Q('hr'), '72,5').value, 72.5);
@@ -42,7 +42,7 @@ test('advice: none for green/no data, red always starts with callSurgeon, no med
 test('every non-green case of every question has actions (low and high where possible)', () => {
   C.QUESTIONS.forEach(q => {
     const z = C.zonesOf(q);
-    if (q.kind === 'vital' && !z) return; // baseline-only slides have no zones
+    if (!z && q.kind !== 'symptom' && q.kind !== 'redflag') return; // baseline-only slides have no zones
     const cases = q.kind === 'symptom' ? [2, 3] : q.kind === 'redflag' ? ['yes'] : [z.ok[0] - 0.01, z.watch[0] - 5, z.ok[1] + 0.01, z.watch[1] + 5];
     let nonOk = 0;
     cases.forEach(v => { const ev = C.evaluate(q, v); if (ev.status === 'ok') return; nonOk++; assert.ok(C.advice(q, ev).length > 0, q.id + ' ' + v); });
@@ -51,11 +51,11 @@ test('every non-green case of every question has actions (low and high where pos
 });
 test('run: guided demo astronaut is mostly green with yellow cases and one red', () => {
   const r = C.run(Demo.guided());
-  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 30, watch: 10, attention: 1, nodata: 4 });
+  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 30, watch: 10, attention: 1, nodata: 10 });
   assert.strictEqual(r.sorted[0].id, 'temp'); assert.ok(r.items.find(i => i.id === 'lymph').skipped);
 });
 test('run: nothing answered is nodata, never ok', () => {
-  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 45);
+  const r = C.run({}); assert.strictEqual(r.overall, 'nodata'); assert.strictEqual(r.counts.ok, 0); assert.strictEqual(r.counts.nodata, 51);
 });
 test('toEntry: only the vitals that were answered; null when none', () => {
   assert.deepStrictEqual(C.toEntry({ hr: 72, sys: '138', mood: 2, exercise: 45, fatigue: 3, wbc: 9 }, '2026-11-14'), { date: '2026-11-14', hr: 72, sys: 138, mood: 2, exercise: 45 });
@@ -130,4 +130,16 @@ test('metabolic-panel labs: zones come from the NASA lab range, kidney and liver
   assert.strictEqual(C.parse(Q2('alt'), '').skipped, true);
   assert.ok(C.advice(Q2('creatinine'), C.evaluate(Q2('creatinine'), 1.5)).includes('reportLab'));
   assert.strictEqual(C.parse(Q2('creatinine'), '99').ok, false);
+});
+
+test('cytokines: judged only against the own usual value, yellow at 2x or more, never red, no usual = no status', () => {
+  const q = C.question('il6');
+  assert.strictEqual(C.zonesOf(q), null);
+  assert.strictEqual(C.evaluate(q, 5).status, 'nodata');
+  assert.strictEqual(C.evaluate(q, 3.9, 2).status, 'ok');
+  const w = C.evaluate(q, 4, 2); assert.strictEqual(w.status, 'watch'); assert.strictEqual(w.dir, 'high'); assert.strictEqual(w.fold, 2);
+  assert.strictEqual(C.evaluate(q, 400, 2).status, 'watch');
+  assert.strictEqual(C.evaluate(q, 0.1, 2).status, 'ok'); // low is not flagged
+  assert.ok(C.advice(q, w).length > 0 && !C.advice(q, w).includes('callSurgeon'));
+  assert.strictEqual(C.parse(q, '7,5').value, 7.5); assert.strictEqual(C.parse(q, '0').code, 'range');
 });

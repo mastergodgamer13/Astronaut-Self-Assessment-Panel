@@ -11,7 +11,7 @@
     'OSD-569': { url: 'https://osdr.nasa.gov/bio/repo/data/studies/OSD-569' }
   };
 
-  var STUDY_FOR = { creatinine: ['OSD-575'], bun: ['OSD-575'], egfr: ['OSD-575'], alt: ['OSD-575'], ast: ['OSD-575'], glucose: ['OSD-575'],
+  var STUDY_FOR = { creatinine: ['OSD-575'], bun: ['OSD-575'], egfr: ['OSD-575'], alt: ['OSD-575'], ast: ['OSD-575'], glucose: ['OSD-575'], il6: ['OSD-575'], tnfa: ['OSD-575'], il8: ['OSD-575'], il10: ['OSD-575'], mcp1: ['OSD-575'], vegfa: ['OSD-575'],
     wbc: ['OSD-569', 'OSD-575'], neut: ['OSD-569', 'OSD-575'], lymph: ['OSD-569', 'OSD-575'] };
 
   // search words for the Live NASA catalog (the catalog is searched in English)
