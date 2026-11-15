@@ -181,7 +181,7 @@
         rn: res.recentN, rmean: fmt(res.recentMean, ind), z: res.z.toFixed(1) }));
       meta = meta.join(' ');
       wrap.appendChild(el('div', { class: 'meta', text: meta }));
-      wrap.appendChild(chart(ind, res));
+      if (res.series.length >= 2) wrap.appendChild(chart(ind, res)); else wrap.appendChild(el('p', { class: 'meta', text: t('chart.need') }));
       wrap.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('why') + ' ' }), t('info.' + id + '.why')]));
       wrap.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('how') + ' ' }), t('info.' + id + '.how'),
         el('span', { class: 'draft', text: t('draft') })]));
@@ -205,6 +205,7 @@
       g.setAttribute('aria-label', t('region.' + g.getAttribute('data-region') + '.title'));
     });
     var sel = $('lang'); if (sel) sel.value = I18n.get();
+    if (window.Panels && Panels.relabel) Panels.relabel(t);
   }
 
   var viewCtx = null;
@@ -277,9 +278,17 @@
     var f = $('checkin'); f.innerHTML = '';
     var today = new Date().toISOString().slice(0, 10);
     f.appendChild(el('label', { class: 'full' }, [el('span', { 'data-i18n': 'fDate', text: t('fDate') }), el('input', { type: 'date', name: 'date', value: today, required: 'required' })]));
-    Core.INDICATORS.forEach(function (ind) {
-      f.appendChild(el('label', null, [el('span', { 'data-ind': ind.id, text: indLabel(ind) + ' (' + unitOf(ind) + ')' }),
-        el('input', { type: 'number', name: ind.id, step: String(ind.step), min: String(ind.min), max: String(ind.max), inputmode: 'decimal' })]));
+    // one collapsible group per body region, so the long list stays easy to scan
+    Object.keys(Content.REGIONS).forEach(function (rid) {
+      var inds = Core.INDICATORS.filter(function (i) { return i.region === rid; });
+      if (!inds.length) return;
+      var g = el('details', { class: 'fgroup full', open: 'open' }, [el('summary', { 'data-i18n': 'region.' + rid + '.title', text: t('region.' + rid + '.title') })]);
+      var grid = el('div', { class: 'fgrid' });
+      inds.forEach(function (ind) {
+        grid.appendChild(el('label', null, [el('span', { 'data-ind': ind.id, text: indLabel(ind) + ' (' + unitOf(ind) + ')' }),
+          el('input', { type: 'number', name: ind.id, step: String(ind.step), min: String(ind.min), max: String(ind.max), inputmode: 'decimal' })]));
+      });
+      g.appendChild(grid); f.appendChild(g);
     });
     f.appendChild(el('button', { type: 'submit', 'data-i18n': 'save', text: t('save') }));
     f.addEventListener('submit', function (ev) {
@@ -394,6 +403,8 @@
     buildForm();
     buildFlightForm();
     buildImmuneForm();
+    Panels.init({ t: t });
+    $('layout-reset').addEventListener('click', function () { Panels.reset(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) {
       b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });
     });

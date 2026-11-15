@@ -179,3 +179,7 @@ On the check-up start screen, **Load real crew values from NASA** reads the Insp
 
 - It needs your relay address (Live NASA tab) and the relay must be the current `worker/osdr-proxy.js`, which forwards `/geode-py/` (file downloads). If it fails, the bundled copies are used.
 - New optional lab slides from the same metabolic panel: creatinine, blood urea nitrogen and eGFR (kidneys), ALT and AST (liver). Their zones are the lab range printed in the NASA file, widened by half its width for yellow (prototype, needs flight-surgeon review). Only 4 crew members, so these ranges describe those 4 people, not all astronauts.
+
+## Movable panels
+
+Every card (users, check-in, pre/post-flight, immune, body map, status, details and each tab's main card) is a panel with a small bar: drag the grip ⠿ to move it (also between columns), use ◀ ▲ ▼ ▶ to move with the keyboard, – to minimize, ⤢ to maximize (Esc closes). The layout is remembered in this browser; **Reset layout** (top right) restores the default. The daily check-in form is now grouped by body region. Code: `js/panels.js`, tests `tests/panels.test.js`.
