@@ -139,6 +139,7 @@
 
   function renderOverall() {
     var c = assessment.counts, box = $('overall');
+    document.documentElement.setAttribute('data-mood', assessment.overall);
     box.innerHTML = '';
     if (window.Orbit) {
       var segs = Object.keys(Content.REGIONS).map(function (id) { return { id: id, status: regionStatus(id), label: t('region.' + id + '.title') + ': ' + t('status.' + regionStatus(id)) }; });

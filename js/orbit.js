@@ -67,31 +67,51 @@
     return svg;
   }
 
-  // starfield: static dots with a slow twinkle; nothing runs when motion is reduced
+  // starfield: three depth layers with parallax (pointer or device tilt), rare shooting stars.
+  // Nothing animates when motion is reduced; it also pauses when the tab is hidden.
   function stars() {
     if (document.getElementById('starfield')) return;
     var cv = document.createElement('canvas'); cv.id = 'starfield'; cv.setAttribute('aria-hidden', 'true');
     document.body.insertBefore(cv, document.body.firstChild);
     var ctx = cv.getContext && cv.getContext('2d'); if (!ctx) return;
-    var list = [], w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), raf = 0;
+    var list = [], w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2), raf = 0, shoot = null, nextShoot = 0, px = 0, py = 0, tx = 0, ty = 0;
     var mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
     function seed() {
       w = window.innerWidth; h = window.innerHeight;
       cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      var n = Math.round(Math.min(160, w * h / 9000)); list = [];
-      for (var i = 0; i < n; i++) list.push({ x: Math.random() * w, y: Math.random() * h, r: Math.random() * 1.1 + .25, a: Math.random() * .5 + .15, p: Math.random() * 6.28, s: Math.random() * .6 + .2 });
+      var n = Math.round(Math.min(220, w * h / 7000)); list = [];
+      for (var i = 0; i < n; i++) {
+        var z = Math.random(); // 0 far .. 1 near
+        list.push({ x: Math.random() * w, y: Math.random() * h, z: z, r: .25 + z * 1.1, a: .15 + z * .5, p: Math.random() * 6.28, s: .2 + Math.random() * .6, warm: Math.random() < .18 });
+      }
     }
     function draw(t) {
+      px += (tx - px) * .05; py += (ty - py) * .05;
       ctx.clearRect(0, 0, w, h);
       list.forEach(function (o) {
         var k = mq.matches ? 1 : .65 + .35 * Math.sin(t / 1000 * o.s + o.p);
-        ctx.globalAlpha = o.a * k; ctx.fillStyle = '#cfe1ff';
-        ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, 6.2832); ctx.fill();
+        var x = ((o.x + px * o.z * 26) % w + w) % w, y = ((o.y + py * o.z * 26) % h + h) % h;
+        ctx.globalAlpha = o.a * k; ctx.fillStyle = o.warm ? '#ffe2b0' : '#cfe1ff';
+        ctx.beginPath(); ctx.arc(x, y, o.r, 0, 6.2832); ctx.fill();
+        if (o.z > .93) { ctx.globalAlpha = o.a * k * .25; ctx.beginPath(); ctx.arc(x, y, o.r * 3.2, 0, 6.2832); ctx.fill(); }
       });
+      if (!mq.matches) {
+        if (!shoot && t > nextShoot) { shoot = { x: Math.random() * w * .8 + w * .1, y: Math.random() * h * .35, v: 9 + Math.random() * 5, life: 0 }; nextShoot = t + 9000 + Math.random() * 14000; }
+        if (shoot) {
+          shoot.life++; shoot.x += shoot.v; shoot.y += shoot.v * .45;
+          var g = ctx.createLinearGradient(shoot.x, shoot.y, shoot.x - 90, shoot.y - 40);
+          g.addColorStop(0, 'rgba(220,235,255,.9)'); g.addColorStop(1, 'rgba(220,235,255,0)');
+          ctx.globalAlpha = Math.max(0, 1 - shoot.life / 40); ctx.strokeStyle = g; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(shoot.x, shoot.y); ctx.lineTo(shoot.x - 90, shoot.y - 40); ctx.stroke();
+          if (shoot.life > 40) shoot = null;
+        }
+      }
     }
     function loop(t) { draw(t); if (!mq.matches && !document.hidden) raf = requestAnimationFrame(loop); }
     function start() { cancelAnimationFrame(raf); draw(0); if (!mq.matches) raf = requestAnimationFrame(loop); }
+    window.addEventListener('pointermove', function (e) { tx = e.clientX / w - .5; ty = e.clientY / h - .5; }, { passive: true });
+    window.addEventListener('deviceorientation', function (e) { if (e.gamma == null) return; tx = Math.max(-.5, Math.min(.5, e.gamma / 60)); ty = Math.max(-.5, Math.min(.5, (e.beta - 45) / 90)); }, { passive: true });
     seed(); start();
     window.addEventListener('resize', function () { seed(); start(); });
     document.addEventListener('visibilitychange', start);
