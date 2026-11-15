@@ -49,6 +49,11 @@ Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for As
 - Compare tab: a "who needs a look first" list sorted by worst status, then by number of red and yellow items. It is a reading order, not a medical ranking.
 - Header: text size (normal / large / extra large) and a high-contrast switch, remembered on this device (`js/display.js`).
 
+## Cytokines (new)
+- Six optional slides: IL-6, TNF-α, IL-8, IL-10, MCP-1, VEGF-A (pg/mL). The NASA file (OSD-575, `...immune.EvePanel_SUBMITTED.csv`) has no normal range and one person's values swing 2 to 7 times between visits, so the app only compares with your own usual value: yellow at 2× or more, never red by itself.
+- The real crew values for these six are read live from the same file and drawn in the crew chart.
+- The 2× cut-off is a prototype value and needs flight-surgeon review.
+
 ## Live site
 
 https://mastergodgamer13.github.io/live-lifesaver/ (GitHub Pages, served from the repository root of `main`).

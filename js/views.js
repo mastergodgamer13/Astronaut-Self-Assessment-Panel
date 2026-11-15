@@ -807,6 +807,7 @@
     box.appendChild(el('div', null, [ctx.chip(ev.status)]));
     box.appendChild(el('p', { class: 'msg', text: ev.status === 'ok' ? t('cu.okmsg') : t('msg.' + ev.status) }));
     if (ev.baselineOnly) box.appendChild(el('div', { class: 'meta', text: t('cu.vsUsual', { ref: ev.usual, pct: Math.abs(ev.pct), word: t(ev.dir ? 'cu.worse' : 'cu.same') }) }));
+    if (q.panel === 'cyt') box.appendChild(el('div', { class: 'meta', text: t('cu.cyt.note') }));
     var z = C.zonesOf(q);
     if (z) box.appendChild(el('div', { class: 'meta', text: t('ref.line', { oklo: z.ok[0], okhi: z.ok[1], wlo: z.watch[0], whi: z.watch[1], unit: C.limits(q).unit }) }));
     if (acts.length) {
@@ -1042,6 +1043,7 @@
       var green, yellow, red, basis;
       if (q.kind === 'symptom') { green = '0–1'; yellow = '2'; red = '3'; basis = t('rv.basis.symptom'); }
       else if (q.kind === 'redflag') { green = t('cu.no'); yellow = '—'; red = t('cu.yes'); basis = t('rv.basis.redflag'); }
+      else if (q.panel === 'cyt') { green = t('rv.cyt.green'); yellow = t('rv.cyt.yellow', { x: C.FOLD.watch }); red = '—'; basis = t('rv.basis.cyt'); }
       else if (z) { green = fmtZ(z.ok) + ' ' + unit; yellow = t('rv.outsideGreen', { lo: z.watch[0], hi: z.watch[1] }) + ' ' + unit; red = t('rv.outsideYellow'); basis = q.panel ? t('rv.basis.cmp') : q.kind === 'lab' ? t('rv.basis.immune') : t('rv.basis.proto'); }
       else { green = t('rv.ownGreen'); yellow = t('rv.ownYellow', { p: Math.round((C.PCT || { watch: 0.1 }).watch * 100) }); red = t('rv.ownRed', { p: Math.round((C.PCT || { attention: 0.2 }).attention * 100) }); basis = t('rv.basis.own'); }
       var acts = C.ACTIONS[q.id] || {}, cell = el('td');

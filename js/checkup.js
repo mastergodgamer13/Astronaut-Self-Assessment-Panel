@@ -31,8 +31,19 @@
     { id: 'skin', kind: 'symptom', organ: 'whole' }, { id: 'teeth', kind: 'symptom', organ: 'whole' },
     { id: 'radiation', kind: 'redflag', organ: null },
     { id: 'emergency', kind: 'redflag', organ: null },
-    { id: 'wbc', kind: 'lab', organ: 'immune' }, { id: 'neut', kind: 'lab', organ: 'immune' }, { id: 'lymph', kind: 'lab', organ: 'immune' }
+    { id: 'wbc', kind: 'lab', organ: 'immune' }, { id: 'neut', kind: 'lab', organ: 'immune' }, { id: 'lymph', kind: 'lab', organ: 'immune' },
+    { id: 'il6', kind: 'lab', panel: 'cyt', organ: 'immune' }, { id: 'tnfa', kind: 'lab', panel: 'cyt', organ: 'immune' }, { id: 'il8', kind: 'lab', panel: 'cyt', organ: 'immune' },
+    { id: 'il10', kind: 'lab', panel: 'cyt', organ: 'immune' }, { id: 'mcp1', kind: 'lab', panel: 'cyt', organ: 'immune' }, { id: 'vegfa', kind: 'lab', panel: 'cyt', organ: 'immune' }
   ];
+
+  // Cytokines (optional blood-test values, pg/mL). NO normal range exists in the NASA file and values swing a lot from day to day, so they are judged only
+  // against the person's OWN usual value: yellow at 2x or more, never red on their own (prototype cut-off, needs review).
+  var CYT = {
+    il6:   { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 }, tnfa:  { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 },
+    il8:   { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 }, il10:  { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 },
+    mcp1:  { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 }, vegfa: { unit: 'pg/mL', min: 0.01, max: 100000, step: 0.01 }
+  };
+  var FOLD = { watch: 2 };
 
   // Metabolic-panel labs (optional). Lab range = the range printed in the NASA file (OSD-575 CMP); yellow zone = that range widened by half its width (prototype).
   var CMP = {
@@ -89,6 +100,8 @@
     emergency: { any: ['stopActivity'] },
     wbc:     { low: ['hygiene', 'sleepSchedule', 'nutrition', 'reportLab'], high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
     neut:    { low: ['hygiene', 'sleepSchedule', 'nutrition', 'reportLab'], high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
+    il6:     { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] }, tnfa: { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] }, il8: { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
+    il10:    { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] }, mcp1: { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] }, vegfa: { high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
     lymph:   { low: ['hygiene', 'sleepSchedule', 'nutrition', 'reportLab'], high: ['rest', 'hydrate', 'hygiene', 'reportLab'] }
   };
 
@@ -97,12 +110,13 @@
   /** Input limits for a number question (sanity limits only, not clinical). */
   function limits(q) {
     if (q.kind === 'vital') { var i = Core.getIndicator(q.id); return { min: i.min, max: i.max, step: i.step, integer: !!i.integer, unit: i.unit }; }
+    if (q.panel === 'cyt') { var y = CYT[q.id]; return { min: y.min, max: y.max, step: y.step, integer: false, unit: y.unit }; }
     if (q.panel === 'cmp') { var c = CMP[q.id]; return { min: c.min, max: c.max, step: c.step, integer: false, unit: c.unit }; }
     if (q.kind === 'lab') { var a = Immune.ANALYTES[q.id], l = Immune.LIMITS[q.id]; return { min: l.min, max: l.max, step: a.decimals ? 0.1 : 1, integer: false, unit: a.unit }; }
     return null;
   }
 
-  function zonesOf(q) { return q.panel === 'cmp' ? { ok: CMP[q.id].ok, watch: CMP[q.id].watch } : q.kind === 'vital' ? Core.REFERENCE[q.id] || null : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
+  function zonesOf(q) { return q.panel === 'cyt' ? null : q.panel === 'cmp' ? { ok: CMP[q.id].ok, watch: CMP[q.id].watch } : q.kind === 'vital' ? Core.REFERENCE[q.id] || null : q.kind === 'lab' ? Immune.REFERENCE[q.id] : null; }
 
   /**
    * Parse and check one raw answer.
@@ -132,6 +146,11 @@
     var z = zonesOf(q);
     if (!z) {
       var u = Number(usual);
+      if (q.panel === 'cyt') { // fold change against the person's own usual value; high only
+        if (!(u > 0)) return { status: 'nodata', dir: null, baselineOnly: true };
+        var fold = value / u, up = fold >= FOLD.watch;
+        return { status: up ? 'watch' : 'ok', dir: up ? 'high' : null, baselineOnly: true, usual: u, pct: Math.round((fold - 1) * 100), fold: Math.round(fold * 10) / 10 };
+      }
       if (!WORSE[q.id] || !(u > 0)) return { status: 'nodata', dir: null, baselineOnly: true };
       var pct = (value - u) / u, worse = WORSE[q.id] === 'high' ? pct : -pct; // positive = worse than usual
       return { status: worse > PCT.attention ? 'attention' : worse > PCT.watch ? 'watch' : 'ok', dir: worse > PCT.watch ? WORSE[q.id] : null, baselineOnly: true, usual: u, pct: Math.round(pct * 100) };
@@ -193,6 +212,6 @@
     return { n: Object.keys(crew).length, pre: mm(pre), post: mm(post) };
   }
 
-  var api = { PCT: PCT, QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
+  var api = { FOLD: FOLD, CYT: CYT, PCT: PCT, QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Checkup = api;
 })(typeof window !== 'undefined' ? window : globalThis);

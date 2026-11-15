@@ -11,8 +11,12 @@
     { study: 'OSD-575', file: /CMP\.upload_SUBMITTED\.csv$/i, names: {
       'GLUCOSE': 'glucose', 'CREATININE': 'creatinine', 'UREA NITROGEN (BUN)': 'bun', 'EGFR NON-AFR. AMERICAN': 'egfr', 'ALT': 'alt', 'AST': 'ast' } },
     { study: 'OSD-569', file: /CBC\.upload_SUBMITTED\.csv$/i, names: {
-      'WHITE BLOOD CELL COUNT': 'wbc', 'ABSOLUTE NEUTROPHILS': 'neut', 'ABSOLUTE LYMPHOCYTES': 'lymph' } }
+      'WHITE BLOOD CELL COUNT': 'wbc', 'ABSOLUTE NEUTROPHILS': 'neut', 'ABSOLUTE LYMPHOCYTES': 'lymph' } },
+    // cytokines: columns Analyte,Concentration,Timepoint,ID,Unit,...; no lab range in this file
+    { study: 'OSD-575', optional: true, file: /immune\.EvePanel_SUBMITTED\.csv$/i, names: up({
+      'IL-6': 'il6', 'TNF\u03b1': 'tnfa', 'IL-8': 'il8', 'IL-10': 'il10', 'MCP-1': 'mcp1', 'VEGF-A': 'vegfa' }) }
   ];
+  function up(o) { var r = {}; Object.keys(o).forEach(function (k) { r[k.toUpperCase()] = o[k]; }); return r; }
 
   function splitLine(line) {
     var out = [], cur = '', q = false;
@@ -29,15 +33,15 @@
     if (lines.length < 2) return [];
     var head = splitLine(lines[0]).map(function (h) { return h.trim().toUpperCase(); });
     var ix = function (n) { return head.indexOf(n); };
-    var iA = ix('ANALYTE'), iV = ix('VALUE'), iL = ix('RANGE_MIN'), iH = ix('RANGE_MAX'), iU = ix('UNITS'), iS = ix('SUBJECT_ID');
-    var iT = head.length - 1; // last column holds the time point (header is TEST_DATE or timepoint)
+    var iA = ix('ANALYTE'), iV = ix('VALUE') >= 0 ? ix('VALUE') : ix('CONCENTRATION'), iL = ix('RANGE_MIN'), iH = ix('RANGE_MAX'), iU = ix('UNITS') >= 0 ? ix('UNITS') : ix('UNIT'), iS = ix('SUBJECT_ID') >= 0 ? ix('SUBJECT_ID') : ix('ID');
+    var iT = ix('TIMEPOINT') >= 0 ? ix('TIMEPOINT') : head.length - 1; // last column holds the time point (header is TEST_DATE or timepoint)
     if (iA < 0 || iV < 0 || iS < 0) return [];
     var num = function (s) { var n = Number(String(s).trim()); return String(s).trim() !== '' && isFinite(n) ? n : null; };
     var rows = [];
     lines.slice(1).forEach(function (l) {
       var c = splitLine(l), v = num(c[iV]);
       if (v === null) return;
-      rows.push({ analyte: String(c[iA]).trim().toUpperCase(), value: v, lo: num(c[iL]), hi: num(c[iH]), unit: String(c[iU] || '').trim(), subject: String(c[iS]).trim(), tp: String(c[iT]).trim() });
+      rows.push({ analyte: String(c[iA]).trim().toUpperCase(), value: v, lo: iL >= 0 ? num(c[iL]) : null, hi: iH >= 0 ? num(c[iH]) : null, unit: String(c[iU] || '').trim(), subject: String(c[iS]).trim(), tp: String(c[iT]).trim() });
     });
     return rows;
   }
@@ -94,8 +98,8 @@
         var r = rangesFromRows(parseCsv(text), src.names), ids = Object.keys(r);
         if (!ids.length) throw new Error('no known analytes');
         ids.forEach(function (id) { r[id].src = src.study; ranges[id] = r[id]; });
-        studies.push(src.study);
-      }).catch(function (e) { errors.push({ study: src.study, message: String(e && e.message || e) }); });
+        if (studies.indexOf(src.study) < 0) studies.push(src.study);
+      }).catch(function (e) { if (src.optional) return; errors.push({ study: src.study, message: String(e && e.message || e) }); });
     })).then(function () { return { ok: studies.length > 0, ranges: ranges, studies: studies.sort(), errors: errors }; });
   }
 

@@ -60,5 +60,14 @@ const CMP = [
     const plain = await CL.load(async u => /\/files\//.test(u) ? { ok: true, json: async () => filesJson(/569/.test(u) ? 'OSD-569' : 'OSD-575') } : { ok: false, status: 404, text: async () => 'not found' }, Live);
     assert.ok(plain.errors.every(e => e.message === 'http 404'));
   });
+  await test('cytokine file (Analyte,Concentration,Timepoint,ID,Unit): IL-6 and TNF-alpha read, pre = L- values, post = R+1, no lab range', () => {
+    const CYT = 'Analyte,Concentration,Timepoint,ID,Unit,Timepoint2,Type,Percent\nIL-6,2.87,L-92,C001,pg/ml,Preflight,HD71,1\nIL-6,4.49,L-92,C002,pg/ml,Preflight,HD71,1\nIL-6,6.86,R+1,C001,pg/ml,Postflight,HD71,1\nIL-6,1.65,R+45,C001,pg/ml,Postflight,HD71,1\nTNF\u03b1,62.39,L-92,C001,pg/ml,Preflight,HD71,1\nIL-17A,9,L-92,C001,pg/ml,Preflight,HD71,1';
+    const src = CL.SOURCES.filter(x => /immune/.test(String(x.file)))[0];
+    assert.ok(src.optional && src.file.test('LSDS-8_Multiplex_serum.immune.EvePanel_SUBMITTED.csv') && !src.file.test('LSDS-8_Multiplex_serum.cardiovascular.EvePanel_SUBMITTED.csv'));
+    const r = CL.rangesFromRows(CL.parseCsv(CYT), src.names);
+    assert.deepStrictEqual(Object.keys(r).sort(), ['il6', 'tnfa']);
+    assert.deepStrictEqual(r.il6.pre, [2.87, 4.49]); assert.deepStrictEqual(r.il6.post, [6.86, 6.86]);
+    assert.strictEqual(r.il6.n, 2); assert.strictEqual(r.il6.unit, 'pg/ml'); assert.strictEqual(r.il6.lo, null); assert.strictEqual(r.il6.hi, null);
+  });
   console.log(n + ' crewlive tests passed');
 })().catch(e => { console.error(e); process.exit(1); });
