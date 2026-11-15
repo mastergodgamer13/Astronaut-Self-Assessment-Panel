@@ -958,5 +958,54 @@
     box.appendChild(slide);
   }
 
-  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+
+  /* ---------- Reviewer view: every indicator, its zones, wording and actions in one place ---------- */
+  function renderReview(ctx, box) {
+    var t = ctx.t, C = ctx.Checkup, Core = ctx.Core;
+    box.innerHTML = '';
+    box.appendChild(el('h2', { text: t('rv.title') }));
+    box.appendChild(el('p', { class: 'msg', text: t('rv.intro') }));
+    var pb = el('button', { type: 'button', class: 'noprint', text: t('rv.print') }); pb.addEventListener('click', function () { window.print(); });
+    box.appendChild(pb);
+
+    box.appendChild(el('h3', { text: t('rv.rules') }));
+    var D = Core.DEFAULTS, pc = C.PCT || { watch: 0.1, attention: 0.2 };
+    var ul = el('ul', { class: 'msg' });
+    [t('rv.rule.zone'), t('rv.rule.baseline', { n: D.baselineN, w: D.watchZ, a: D.attentionZ, r: D.recentN }), t('rv.rule.own', { w: Math.round(pc.watch * 100), a: Math.round(pc.attention * 100) }),
+     t('rv.rule.symptom'), t('rv.rule.redflag'), t('rv.rule.red')].forEach(function (s) { ul.appendChild(el('li', { text: s })); });
+    box.appendChild(ul);
+
+    box.appendChild(el('h3', { text: t('rv.statusTexts') }));
+    var sl = el('ul', { class: 'msg' });
+    ['ok', 'watch', 'attention', 'nodata'].forEach(function (s) { sl.appendChild(el('li', null, [ctx.chip(s), ' ' + (s === 'ok' ? t('cu.okmsg') : t('msg.' + s))])); });
+    box.appendChild(sl);
+
+    box.appendChild(el('h3', { text: t('rv.items') }));
+    var tbl = el('table', { class: 'cmp reviewtbl' }), head = el('tr');
+    ['rv.col.item', 'rv.col.organ', 'rv.col.green', 'rv.col.yellow', 'rv.col.red', 'rv.col.actions', 'rv.col.basis'].forEach(function (k) { head.appendChild(el('th', { scope: 'col', text: t(k) })); });
+    tbl.appendChild(el('thead', null, [head]));
+    var body = el('tbody');
+    var fmtZ = function (a) { return a[0] + '–' + a[1]; };
+    C.QUESTIONS.forEach(function (q) {
+      var z = C.zonesOf(q), L = C.limits(q), unit = L ? L.unit : '', label = q.kind === 'vital' ? t('ind.' + q.id) : q.panel ? t('lab.' + q.id) : q.kind === 'lab' ? t('o9.a.' + q.id) : t('cu.q.' + q.id + '.ask');
+      var green, yellow, red, basis;
+      if (q.kind === 'symptom') { green = '0–1'; yellow = '2'; red = '3'; basis = t('rv.basis.symptom'); }
+      else if (q.kind === 'redflag') { green = t('cu.no'); yellow = '—'; red = t('cu.yes'); basis = t('rv.basis.redflag'); }
+      else if (z) { green = fmtZ(z.ok) + ' ' + unit; yellow = t('rv.outsideGreen', { lo: z.watch[0], hi: z.watch[1] }) + ' ' + unit; red = t('rv.outsideYellow'); basis = q.panel ? t('rv.basis.cmp') : q.kind === 'lab' ? t('rv.basis.immune') : t('rv.basis.proto'); }
+      else { green = t('rv.ownGreen'); yellow = t('rv.ownYellow', { p: Math.round((C.PCT || { watch: 0.1 }).watch * 100) }); red = t('rv.ownRed', { p: Math.round((C.PCT || { attention: 0.2 }).attention * 100) }); basis = t('rv.basis.own'); }
+      var acts = C.ACTIONS[q.id] || {}, cell = el('td');
+      Object.keys(acts).forEach(function (dir) {
+        cell.appendChild(el('div', { class: 'meta', text: t('rv.dir.' + dir) + ':' }));
+        var o = el('ol', { class: 'msg' }); acts[dir].forEach(function (a) { o.appendChild(el('li', { text: t('act.' + a) })); }); cell.appendChild(o);
+      });
+      if (!Object.keys(acts).length) cell.appendChild(el('span', { class: 'meta', text: t('rv.noActions') }));
+      body.appendChild(el('tr', null, [el('th', { scope: 'row', text: label + (unit ? ' (' + unit + ')' : '') }), el('td', { text: q.organ ? t('region.' + q.organ + '.title') : '—' }),
+        el('td', { text: green }), el('td', { text: yellow }), el('td', { text: red }), cell, el('td', { class: 'meta', text: basis })]));
+    });
+    tbl.appendChild(body);
+    box.appendChild(el('div', { class: 'tablewrap' }, [tbl]));
+    box.appendChild(el('p', { class: 'meta', text: t('rv.note') }));
+  }
+
+  root.Views = { renderReview: renderReview, renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

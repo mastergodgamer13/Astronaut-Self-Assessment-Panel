@@ -185,6 +185,6 @@
     return { n: Object.keys(crew).length, pre: mm(pre), post: mm(post) };
   }
 
-  var api = { QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
+  var api = { PCT: PCT, QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Checkup = api;
 })(typeof window !== 'undefined' ? window : globalThis);

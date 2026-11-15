@@ -258,3 +258,9 @@ form#checkin input, form#flightform input, form#immuneform input, form#missionfo
 .layout1 { grid-template-columns: minmax(0, 1fr); }
 p, li, h2, h3, h4, .meta, .msg, .callout, summary { overflow-wrap: anywhere; }
 @media (max-width: 520px) { .fgrid { grid-template-columns: minmax(0, 1fr); } }
+
+.reviewtbl { font-size: .82rem; }
+.reviewtbl td, .reviewtbl th { vertical-align: top; }
+.reviewtbl ol { margin: .1rem 0 .4rem 1rem; padding: 0; }
+.changes { margin-top: .5rem; }
+@media print { .noprint { display: none; } .reviewtbl { font-size: 9pt; } .card { break-inside: auto; } }
