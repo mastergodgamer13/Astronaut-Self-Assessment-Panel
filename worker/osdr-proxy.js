@@ -13,6 +13,7 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (request.method !== 'GET') return new Response('GET only', { status: 405, headers: CORS });
     const url = new URL(request.url);
+    if (url.pathname === '/health') return new Response(JSON.stringify({ ok: true, version: 2, relays: Object.keys(UPSTREAMS) }), { headers: { ...CORS, 'content-type': 'application/json' } }); // lets the app tell a current relay from an old one
     const prefix = Object.keys(UPSTREAMS).find(p => url.pathname.startsWith(p));
     if (!prefix) return new Response('Only /osdr/..., /geode-py/... and /biodata/... are relayed', { status: 404, headers: CORS });
     const upstream = await fetch(UPSTREAMS[prefix] + url.pathname + url.search, { headers: { accept: 'application/json' } });

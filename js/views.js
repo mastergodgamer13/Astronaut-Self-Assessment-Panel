@@ -629,6 +629,7 @@
     pf.appendChild(el('label', null, [el('span', { text: t('lv.proxy') }), pin]));
     pf.appendChild(el('small', { class: 'meta', text: t('lv.proxy.hint') }));
     box.appendChild(pf);
+    box.appendChild(relayCheck(ctx, function () { return pin.value; }));
 
     // 2. search
     var f = el('form', { novalidate: 'novalidate' });
@@ -672,6 +673,21 @@
       box.appendChild(card);
     });
     box.appendChild(el('p', { class: 'msg', text: t('lv.note') }));
+  }
+
+
+  // "Check relay" button: asks the relay itself whether it is the current version and whether it reaches NASA
+  function relayCheck(ctx, getAddress) {
+    var t = ctx.t, out = el('div', { class: 'relaycheck' }), msg = el('p', { class: 'msg', role: 'status', 'aria-live': 'polite' });
+    var btn = el('button', { type: 'button', text: t('diag.relay.btn') });
+    btn.addEventListener('click', function () {
+      msg.className = 'msg'; msg.textContent = t('diag.relay.busy');
+      ctx.Diag.checkRelay(function (u) { return window.fetch(u); }, getAddress()).then(function (r) {
+        var key = r.status === 'current' ? (r.nasa ? 'diag.relay.current' : 'diag.relay.currentNoNasa') : 'diag.relay.' + r.status;
+        msg.className = 'msg' + (r.status === 'current' && r.nasa ? '' : ' form-msg err'); msg.textContent = (r.status === 'current' && r.nasa ? '✓ ' : '✗ ') + t(key, { http: r.http === null ? 'no answer' : r.http });
+      });
+    });
+    out.appendChild(btn); out.appendChild(msg); return out;
   }
 
   /* ---------- Guided check-up: one question per slide ---------- */
@@ -832,7 +848,7 @@
       rin.addEventListener('change', function () { var v = rin.value.trim(); try { window.localStorage.setItem('ll_proxy', v); } catch (e) { /* storage blocked */ } ctx.Live.setBase(v); });
       lv.appendChild(el('label', null, [el('span', { class: 'meta', text: t('cu.live.relay') }), rin]));
       lb.addEventListener('click', function () { var v = rin.value.trim(); try { window.localStorage.setItem('ll_proxy', v); } catch (e) { /* storage blocked */ } loadCrew(ctx, box, hooks, false); });
-      lv.appendChild(lb);
+      lv.appendChild(lb); lv.appendChild(relayCheck(ctx, function () { return rin.value; }));
       if (L.state === 'ok') {
         lv.appendChild(el('p', { class: 'msg', text: (L.cached ? t('cu.live.cached', { date: L.at || '?', studies: L.studies.join(', ') }) : t('cu.live.ok', { studies: L.studies.join(', ') })) + (L.errors && L.errors.length && !L.failed ? ' ' + t('cu.live.partial', { studies: L.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
         if (L.failed) lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.refreshFail') }));

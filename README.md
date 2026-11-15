@@ -219,3 +219,9 @@ Complete translations: English, Türkçe, Italiano, Español. Core-interface tra
 ## Real crew values from NASA: remembered, and a default relay
 
 The check-up start page now has a **relay address** field of its own (same saved address as the Live NASA tab). With an address saved, the real crew values refresh by themselves once per visit, and the last successful load is **kept in this browser** (shown as "FROM NASA — saved <date>"), so a reload or being offline no longer drops back to the bundled copies. To give every visitor live values without typing, put your deployed relay address in `js/config.js` (`relay: 'https://….workers.dev'`). The relay must be the current `worker/osdr-proxy.js` (it must forward `/geode-py/`); redeploy it if it is older.
+
+## Self-checks: relay and reminders
+
+- **Check relay** (check-up start page and Live NASA tab): asks your relay whether it is the current `worker/osdr-proxy.js` (it answers `/health` with version 2) and whether NASA answers through it. An old relay is named as old, with the redeploy steps. After updating the worker code, redeploy it once so `/health` exists.
+- **Check my reminder setup** (Reminders panel): lists eight steps (notifications supported and allowed, service worker running, push supported, relay address, public key, subscription, relay accepted this device) and marks the first one that fails with what to do.
+- `node tests/push-sim.test.mjs` runs the reminder relay against a fake push service and fake storage: signed content-free pushes, once per day, skipped after a check-in, removed on 410, retried on 503. It cannot replace one real notification on a real phone.
