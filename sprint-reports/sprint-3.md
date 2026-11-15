@@ -13,6 +13,7 @@ One of the major challenges we faced was the time-consuming process of manually 
 - **Inspirations section:** we introduced a new section that presents the initial datasets used throughout our project, along with their corresponding charts and visualizations, so users can explore the data behind the software and better understand its foundations.
 - **Mobile access:** we worked on making the software available to mobile users.
 - **Notifications and reminders:** we enhanced the notification and reminder settings to provide device-specific functionality.
+- **Print option:** we made the print option available in the software, so a user can print the report or save it as a PDF to share with a clinician. We developed this feature with the help of Claude (Anthropic's AI assistant), which we used to write and review the print layout and its code, and the team tested and approved the result.
 - **Testing and fixes:** we conducted multiple tests to evaluate the new features, identify potential issues, and improve the overall stability of the software. Based on the test results, we made the necessary code improvements and resolved several errors.
 
 ## Summary
