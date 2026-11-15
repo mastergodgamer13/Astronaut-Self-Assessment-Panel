@@ -103,7 +103,7 @@
     var date = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
     var entry = Checkup.toEntry(answers, date);
     if (!entry) return { ok: false, key: 'cu.nosave.vitals' };
-    store.saveEntry(store.current(), entry); render();
+    store.saveEntry(store.current(), entry); if (window.Pwa) Pwa.checkedIn(date); render();
     return { ok: true, key: 'cu.saved', date: date };
   }
 
@@ -206,6 +206,7 @@
     });
     var sel = $('lang'); if (sel) sel.value = I18n.get();
     if (window.Panels && Panels.relabel) Panels.relabel(t);
+    if (window.Pwa) Pwa.relabel();
   }
 
   var viewCtx = null;
@@ -299,6 +300,7 @@
       if (!store.current()) { msg.className = 'form-msg err'; msg.textContent = t('users.needUser'); return; }
       if (!v.ok) { msg.className = 'form-msg err'; msg.textContent = errText(v); return; }
       store.saveEntry(store.current(), v.entry); // one entry per date: replaced if it exists
+      if (window.Pwa) Pwa.checkedIn(v.entry.date);
       msg.className = 'form-msg good'; msg.textContent = t('savedFor', { date: v.entry.date });
       state.mode = 'manual'; render();
     });
@@ -456,6 +458,7 @@
     buildFlightForm();
     buildImmuneForm();
     Panels.init({ t: t });
+    if (window.Pwa) Pwa.init({ t: t, lang: function () { return I18n.get(); } });
     $('layout-reset').addEventListener('click', function () { Panels.reset(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) {
       b.addEventListener('click', function () { state.tab = b.getAttribute('data-tab'); render(); });

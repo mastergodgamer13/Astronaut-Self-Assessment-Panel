@@ -1,0 +1,13 @@
+# Example config for the reminders worker. Create the KV namespace first:  npx wrangler kv namespace create SUBS
+name = "live-lifesaver-reminders"
+main = "push.mjs"
+compatibility_date = "2024-11-01"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "PUT_THE_ID_PRINTED_BY_THE_COMMAND_ABOVE"
+
+# Secrets (wrangler secret put NAME): VAPID_PUBLIC, VAPID_PRIVATE_JWK, VAPID_SUBJECT (e.g. mailto:you@example.com)

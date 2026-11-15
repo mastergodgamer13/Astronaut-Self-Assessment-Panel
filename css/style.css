@@ -236,3 +236,10 @@ form#missionform button { grid-column: 1 / -1; background: var(--accent); color:
 .insp-card h3 { margin: 0 0 .3rem; font-size: 1rem; }
 .insp-links { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; margin-top: .4rem; }
 .insp-links .ghost { background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: .35rem .8rem; font: inherit; font-size: .85rem; cursor: pointer; }
+
+.net-banner { background: var(--watch); color: #1a1200; text-align: center; padding: .4rem .75rem; font-weight: 600; font-size: .9rem; }
+.net-banner[hidden] { display: none; }
+#remindform label { display: block; margin-bottom: .5rem; }
+#remindform label.check { display: flex; gap: .5rem; align-items: center; }
+#remindform input[type=time], #remindform input[type=url], #remindform input[type=text] { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: .45rem .5rem; font: inherit; width: 100%; }
+#remindform .btnrow { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }

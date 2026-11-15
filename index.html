@@ -4,9 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astronot Self Check — NASA Space Apps 2026 prototype</title>
-  <link rel="stylesheet" href="css/style.css?v=20261115f">
+  <meta name="theme-color" content="#0a0f18">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css?v=20261115g">
 </head>
 <body>
+  <div id="net-banner" class="net-banner" role="status" hidden></div>
   <header class="top">
     <div class="brand">
       <svg class="logo" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -77,6 +81,24 @@
         <p class="hint" data-i18n="ms.hint">hint</p>
         <form id="missionform" novalidate></form>
         <div id="mission-msg" role="alert" class="form-msg"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-remind" data-panel="remind" data-panel-title="remind.title">
+        <h2 id="h-remind" data-rt="remind.title">Reminders</h2>
+        <p class="hint" data-rt="remind.hint">hint</p>
+        <form id="remindform" novalidate>
+          <label class="check"><input type="checkbox" name="enabled"> <span data-rt="remind.enable">Remind me every day</span></label>
+          <label><span data-rt="remind.time">Time</span><input type="time" name="time" value="08:00"></label>
+          <details class="fgroup"><summary data-rt="remind.advanced">Advanced</summary>
+            <label><span data-rt="remind.relay">Service</span><input type="url" name="relay" autocomplete="off" placeholder="https://"></label>
+            <label><span data-rt="remind.vapid">Key</span><input type="text" name="vapid" autocomplete="off"></label>
+          </details>
+          <div class="btnrow"><button class="primary" type="submit" data-rt="remind.save">Save reminders</button>
+          <button type="button" id="remind-test" data-rt="remind.test">Send a test notification</button>
+          <button type="button" id="remind-install" hidden>Install app</button></div>
+        </form>
+        <p id="remind-ios" class="hint"></p>
+        <div id="remind-msg" role="status" class="form-msg"></div>
       </section>
 
       <section class="card" aria-labelledby="h-flight" data-panel="flight" data-panel-title="fl.title">
@@ -190,24 +212,26 @@
        Status levels use configurable statistical cut-offs (|z| ≥ 2 and ≥ 3 relative to your first 7 readings), not clinical thresholds.</p>
   </footer>
 
-  <script src="js/i18n.js?v=20261115f"></script>
-  <script src="js/core.js?v=20261115f"></script>
-  <script src="js/mission.js?v=20261115f"></script>
-  <script src="js/store.js?v=20261115f"></script>
-  <script src="js/osdr.js?v=20261115f"></script>
-  <script src="js/expression.js?v=20261115f"></script>
-  <script src="js/osd635.js?v=20261115f"></script>
-  <script src="js/osd569-data.js?v=20261115f"></script>
-  <script src="js/osd569.js?v=20261115f"></script>
-  <script src="js/live.js?v=20261115f"></script>
-  <script src="js/immune.js?v=20261115f"></script>
-  <script src="js/crewlive.js?v=20261115f"></script>
-  <script src="js/checkup.js?v=20261115f"></script>
-  <script src="js/panels.js?v=20261115f"></script>
-  <script src="js/charts.js?v=20261115f"></script>
-  <script src="js/demo.js?v=20261115f"></script>
-  <script src="js/content.js?v=20261115f"></script>
-  <script src="js/views.js?v=20261115f"></script>
-  <script src="js/app.js?v=20261115f"></script>
+  <script src="js/i18n.js?v=20261115g"></script>
+  <script src="js/core.js?v=20261115g"></script>
+  <script src="js/remind.js?v=20261115g"></script>
+  <script src="js/mission.js?v=20261115g"></script>
+  <script src="js/store.js?v=20261115g"></script>
+  <script src="js/osdr.js?v=20261115g"></script>
+  <script src="js/expression.js?v=20261115g"></script>
+  <script src="js/osd635.js?v=20261115g"></script>
+  <script src="js/osd569-data.js?v=20261115g"></script>
+  <script src="js/osd569.js?v=20261115g"></script>
+  <script src="js/live.js?v=20261115g"></script>
+  <script src="js/immune.js?v=20261115g"></script>
+  <script src="js/crewlive.js?v=20261115g"></script>
+  <script src="js/checkup.js?v=20261115g"></script>
+  <script src="js/panels.js?v=20261115g"></script>
+  <script src="js/charts.js?v=20261115g"></script>
+  <script src="js/demo.js?v=20261115g"></script>
+  <script src="js/content.js?v=20261115g"></script>
+  <script src="js/views.js?v=20261115g"></script>
+  <script src="js/pwa.js?v=20261115g"></script>
+  <script src="js/app.js?v=20261115g"></script>
 </body>
 </html>
