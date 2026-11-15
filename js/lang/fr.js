@@ -1,7 +1,7 @@
 /* Français — full interface. Machine-assisted draft; any key missing falls back to English. */
 I18n.extend("fr", "Français", {
-    "docTitle": "Astronot Self Check — prototype NASA Space Apps 2026",
-    "appTitle": "Astronot Self Check",
+    "docTitle": "Astronaut Self Check — prototype NASA Space Apps 2026",
+    "appTitle": "Astronaut Self Check",
     "appSub": "NASA Space Apps Challenge 2026 · prototype",
     "langLabel": "Langue",
     "bannerStrong": "Prototype — pas un dispositif médical.",

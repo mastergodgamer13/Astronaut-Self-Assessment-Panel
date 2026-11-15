@@ -1,7 +1,7 @@
 /* 中文（简体） — full interface. Machine-assisted draft; any key missing falls back to English. */
 I18n.extend("zh", "中文（简体）", {
-    "docTitle": "Astronot Self Check — NASA Space Apps 2026 原型",
-    "appTitle": "Astronot Self Check",
+    "docTitle": "Astronaut Self Check — NASA Space Apps 2026 原型",
+    "appTitle": "Astronaut Self Check",
     "appSub": "NASA Space Apps Challenge 2026 · 原型",
     "langLabel": "语言",
     "bannerStrong": "原型——不是医疗器械。",
