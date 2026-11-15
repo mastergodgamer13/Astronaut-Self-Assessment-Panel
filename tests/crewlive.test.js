@@ -53,5 +53,12 @@ const CMP = [
     const none = await CL.load(async () => { throw new Error('blocked by CORS'); }, Live);
     assert.strictEqual(none.ok, false); assert.strictEqual(none.errors.length, 2);
   });
+  await test('old relay (404 with its own "Only /osdr/..." text on downloads) is reported as old-relay', async () => {
+    const oldRelay = async u => /\/files\//.test(u) ? { ok: true, json: async () => filesJson(/569/.test(u) ? 'OSD-569' : 'OSD-575') } : { ok: false, status: 404, text: async () => 'Only /osdr/... and /biodata/... are relayed' };
+    const r = await CL.load(oldRelay, Live);
+    assert.strictEqual(r.ok, false); assert.ok(r.errors.every(e => e.message === 'old-relay'));
+    const plain = await CL.load(async u => /\/files\//.test(u) ? { ok: true, json: async () => filesJson('OSD-569') } : { ok: false, status: 404, text: async () => 'not found' }, Live);
+    assert.ok(plain.errors.every(e => e.message === 'http 404'));
+  });
   console.log(n + ' crewlive tests passed');
 })().catch(e => { console.error(e); process.exit(1); });

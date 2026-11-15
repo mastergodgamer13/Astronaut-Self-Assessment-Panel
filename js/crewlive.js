@@ -69,8 +69,12 @@
   }
   function getText(fetchFn, url) {
     return Promise.resolve().then(function () { return fetchFn(url); }).then(function (res) {
-      if (!res || !res.ok) throw new Error('http ' + (res && res.status));
-      return res.text();
+      if (res && res.ok) return res.text();
+      var code = 'http ' + (res && res.status);
+      // an old relay answers file downloads with its own 404 text ("Only /osdr/..., /geode-py/..."); say so instead of a bare 404
+      return Promise.resolve(res && res.text ? res.text() : '').catch(function () { return ''; }).then(function (body) {
+        throw new Error(res && res.status === 404 && /Only \/osdr\//.test(String(body)) ? 'old-relay' : code);
+      });
     });
   }
 

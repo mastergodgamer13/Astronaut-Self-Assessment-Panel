@@ -808,7 +808,7 @@
         lv.appendChild(el('p', { class: 'msg', text: (L.cached ? t('cu.live.cached', { date: L.at || '?', studies: L.studies.join(', ') }) : t('cu.live.ok', { studies: L.studies.join(', ') })) + (L.errors && L.errors.length && !L.failed ? ' ' + t('cu.live.partial', { studies: L.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
         if (L.failed) lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.refreshFail') }));
       } else if (L.state === 'err') {
-        lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.err') + (L.errors && L.errors[0] ? ' (' + L.errors[0].study + ': ' + L.errors[0].message + ')' : '') }));
+        lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: (L.errors && L.errors.some(function (e) { return e.message === 'old-relay'; }) ? t('cu.live.oldRelay') : t('cu.live.err') + (L.errors && L.errors[0] ? ' (' + L.errors[0].study + ': ' + L.errors[0].message + ')' : '')) }));
       } else if (!crewRelay()) lv.appendChild(el('p', { class: 'meta', text: t('cu.live.bundled') }));
       // with a saved relay address the values refresh themselves once per visit
       if (!wiz.auto && crewRelay() && L.state !== 'busy') { wiz.auto = true; setTimeout(function () { loadCrew(ctx, box, hooks, true); }, 0); }
