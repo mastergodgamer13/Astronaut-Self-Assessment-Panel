@@ -206,6 +206,7 @@ I18n.extend("de", "Deutsch", {
     "disp.large": "Großer Text",
     "disp.xlarge": "Sehr großer Text",
     "disp.hc": "Hoher Kontrast",
+    "disp.menu": "Anzeige",
     "insp.title": "Inspirationen",
     "insp.intro": "Diese drei NASA-OSDR-Studien sind die Beispiele, aus denen wir Ideen für dieses Projekt gewonnen haben. Ihre Werte werden wie veröffentlicht zur Orientierung gezeigt. Sie sind keine medizinischen Regeln für diese App; jede hat eine Funktion geprägt.",
     "insp.osd575": "Beispiel OSD-575",

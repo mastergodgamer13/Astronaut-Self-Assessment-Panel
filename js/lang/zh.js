@@ -206,6 +206,7 @@ I18n.extend("zh", "中文（简体）", {
     "disp.large": "大号文字",
     "disp.xlarge": "特大号文字",
     "disp.hc": "高对比度",
+    "disp.menu": "显示",
     "insp.title": "灵感来源",
     "insp.intro": "这三项 NASA OSDR 研究是我们为本项目收集想法的范例。其数值按发表原样展示，仅供参考。它们不是本应用的医学规则；每一项都启发了一个功能。",
     "insp.osd575": "OSD-575 示例",
