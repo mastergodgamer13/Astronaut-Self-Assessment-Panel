@@ -46,7 +46,7 @@ Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for As
 
 ## Live site
 
-https://mastergodgamer13.github.io/nasahealthmontoringsoftware/ (GitHub Pages, served from the repository root of `main`).
+https://mastergodgamer13.github.io/live-lifesaver/ (GitHub Pages, served from the repository root of `main`).
 
 ## Run it
 
