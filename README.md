@@ -249,3 +249,15 @@ The address is the address of **your own** Cloudflare Worker that runs `worker/p
 7. **Use it:** copy the Worker address (`https://lifesaver-reminders.<your-name>.workers.dev`). In the app: Reminders → advanced → paste it as the service address, paste the public key, tick "Remind me every day", **Save reminders**, then press **Check my reminder setup**: all eight lines should show ✓.
 
 Site-wide defaults live in `js/config.js` (`reminders.url` = your reminder worker address, `reminders.vapid` = its public key; both public by design). With them set, visitors only tick "Remind me every day". Values typed in Reminders → advanced take priority. Never put the private key in this file.
+
+## Team, references and use of AI
+
+**Team:** HELIXION, NASA Space Apps Challenge 2026 (Nigde local event), challenge "Create Health Monitoring Software for Astronauts on Space Missions". Released under the MIT License (see `LICENSE`).
+
+**Prior work and hackathon work:** the first prototype (check-in form, personal baseline, first indicators and the Sprint 1 and 2 work) was started before the hackathon. Sprint 3 and Sprint 4 work, including the Live NASA catalogue, the guided check-up, the nine languages, offline use and reminders, the Orbit redesign and the print option, was done during the hackathon. See `sprint-reports/` and the commit history.
+
+**Data and references:**
+- NASA Open Science Data Repository (OSDR): OSD-575, OSD-569 and OSD-635 (SpaceX Inspiration4 crew), read live from the OSDR API or copied unchanged from the published files.
+- Reference zones in the app are prototype values, not a diagnosis, and need review by a flight surgeon.
+
+**Use of AI:** we used Claude (Anthropic) to help write and review code, tests, translations, the print option, documentation and the presentation. The team chose the idea, directed the work, checked the results and made the final decisions.
