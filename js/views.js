@@ -713,6 +713,34 @@
     return item.value + ' ' + ctx.Checkup.limits(q).unit;
   }
 
+
+  // chart + numbers for one analyte read live from NASA; `mine` = the user's own answer (optional)
+  function crewChart(ctx, id, liveR, mine) {
+    var t = ctx.t, C = ctx.Checkup, q = C.QUESTIONS.filter(function (x) { return x.id === id; })[0], z = q ? C.zonesOf(q) : null;
+    var rows = [{ label: t('cu.chart.pre'), lo: liveR.pre ? liveR.pre[0] : null, hi: liveR.pre ? liveR.pre[1] : null, color: '#5ab4ff' },
+                { label: t('cu.chart.post'), lo: liveR.post ? liveR.post[0] : null, hi: liveR.post ? liveR.post[1] : null, color: '#ff9f43' }];
+    var name = q ? wizLabel(ctx, q) : id;
+    return root.Charts.rangeChart({ zones: z, lab: liveR.lo !== null || liveR.hi !== null ? [liveR.lo, liveR.hi] : null, rows: rows, unit: liveR.unit,
+      marker: mine !== undefined && mine !== null && isFinite(mine) ? { value: Number(mine), label: t('cu.chart.you') } : null,
+      labels: { ok: t('cu.chart.zoneOk'), watch: t('cu.chart.zoneWatch'), lab: t('cu.chart.lab') },
+      aria: name + ': ' + t('cu.crew.line', { src: liveR.src, n: liveR.n, pre: liveR.pre ? liveR.pre.join('–') : '—', post: liveR.post ? liveR.post.join('–') : '—', unit: liveR.unit }) });
+  }
+
+  function crewSummary(ctx) {
+    var t = ctx.t, box = el('div', { class: 'crewsum' }), ids = Object.keys(wiz.live.ranges || {});
+    box.appendChild(el('strong', { text: t('cu.live.sumTitle') }));
+    ids.forEach(function (id) {
+      var r = wiz.live.ranges[id], q = ctx.Checkup.QUESTIONS.filter(function (x) { return x.id === id; })[0];
+      var card = el('div', { class: 'crewcard' });
+      card.appendChild(el('h4', { text: (q ? wizLabel(ctx, q) : id) + ' · ' + r.src }));
+      var f = function (a) { return a ? a[0] + '–' + a[1] : '—'; };
+      card.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: r.src, n: r.n, pre: f(r.pre), post: f(r.post), unit: r.unit }) + (r.lo !== null || r.hi !== null ? ' · ' + t('cu.live.lab', { lo: r.lo === null ? '—' : r.lo, hi: r.hi === null ? '—' : r.hi, unit: r.unit }) : '') }));
+      card.appendChild(crewChart(ctx, id, r, null));
+      box.appendChild(card);
+    });
+    return box;
+  }
+
   function crewBlock(ctx, q) {
     var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '', liveR = wiz.live && wiz.live.ranges && wiz.live.ranges[q.id];
     if (liveR) { // real NASA file, read live
@@ -720,6 +748,7 @@
       lb.appendChild(el('strong', { text: t('cu.crew.title') + ' ' })); lb.appendChild(el('span', { class: 'badge real', text: wiz.live.cached ? t('cu.live.badgeSaved', { date: wiz.live.at || '?' }) : t('cu.live.badge') }));
       lb.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: liveR.src, n: liveR.n, pre: fl(liveR.pre), post: fl(liveR.post), unit: liveR.unit }) }));
       if (liveR.lo !== null || liveR.hi !== null) lb.appendChild(el('p', { class: 'meta', text: t('cu.live.lab', { lo: liveR.lo === null ? '—' : liveR.lo, hi: liveR.hi === null ? '—' : liveR.hi, unit: liveR.unit }) }));
+      var mineP = ctx.Checkup.parse(q, wiz.answers[q.id]); lb.appendChild(crewChart(ctx, q.id, liveR, mineP.ok && !mineP.skipped ? mineP.value : null));
       return lb;
     }
     if (q.kind === 'lab' && !q.panel) { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
@@ -810,6 +839,7 @@
       } else if (L.state === 'err') {
         lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: (L.errors && L.errors.some(function (e) { return e.message === 'old-relay'; }) ? t('cu.live.oldRelay') : t('cu.live.err') + (L.errors && L.errors[0] ? ' (' + L.errors[0].study + ': ' + L.errors[0].message + ')' : '')) }));
       } else if (!crewRelay()) lv.appendChild(el('p', { class: 'meta', text: t('cu.live.bundled') }));
+      if (L.state === 'ok' && L.ranges && Object.keys(L.ranges).length) lv.appendChild(crewSummary(ctx));
       // with a saved relay address the values refresh themselves once per visit
       if (!wiz.auto && crewRelay() && L.state !== 'busy') { wiz.auto = true; setTimeout(function () { loadCrew(ctx, box, hooks, true); }, 0); }
       box.appendChild(lv);
