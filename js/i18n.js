@@ -22,8 +22,8 @@
   var D = {};
 
   D.en = {
-    'docTitle': 'Astronaut Self Check — NASA Space Apps 2026 prototype',
-    'appTitle': 'Astronaut Self Check',
+    'docTitle': 'Astronaut Self-Assessment Panel — NASA Space Apps 2026 prototype',
+    'appTitle': 'Astronaut Self-Assessment Panel',
     'appSub': 'NASA Space Apps Challenge 2026 · prototype',
     'langLabel': 'Language',
     'disp.size': 'Text size',
@@ -772,8 +772,8 @@
   };
 
   D.tr = {
-    'docTitle': 'Astronaut Self Check — NASA Space Apps 2026 prototipi',
-    'appTitle': 'Astronaut Self Check',
+    'docTitle': 'Astronaut Self-Assessment Panel — NASA Space Apps 2026 prototipi',
+    'appTitle': 'Astronaut Self-Assessment Panel',
     'appSub': 'NASA Space Apps Challenge 2026 · prototip',
     'langLabel': 'Dil',
     'disp.size': 'Yazı boyutu',
@@ -1522,8 +1522,8 @@
   };
 
   D.it = {
-    'docTitle': 'Astronaut Self Check — prototipo NASA Space Apps 2026',
-    'appTitle': 'Astronaut Self Check',
+    'docTitle': 'Astronaut Self-Assessment Panel — prototipo NASA Space Apps 2026',
+    'appTitle': 'Astronaut Self-Assessment Panel',
     'appSub': 'NASA Space Apps Challenge 2026 · prototipo',
     'langLabel': 'Lingua',
     'disp.size': 'Dimensione del testo',
@@ -2272,8 +2272,8 @@
   };
 
   D.es = {
-    'docTitle': 'Astronaut Self Check — prototipo NASA Space Apps 2026',
-    'appTitle': 'Astronaut Self Check',
+    'docTitle': 'Astronaut Self-Assessment Panel — prototipo NASA Space Apps 2026',
+    'appTitle': 'Astronaut Self-Assessment Panel',
     'appSub': 'NASA Space Apps Challenge 2026 · prototipo',
     'langLabel': 'Idioma',
     'disp.size': 'Tamaño del texto',

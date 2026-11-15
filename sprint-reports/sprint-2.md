@@ -33,7 +33,7 @@ These findings may help us better understand how the space environment affects m
 
 ## Prototype Development
 
-In addition to our research, we have developed an initial prototype of our project, called **Astronaut Self-Assessment Check**, and uploaded it to our GitHub repository.
+In addition to our research, we have developed an initial prototype of our project, called **Astronaut Self-Assessment Panel**, and uploaded it to our GitHub repository.
 
 The three selected datasets have been incorporated into the prototype's code, establishing the foundation for further development.
 

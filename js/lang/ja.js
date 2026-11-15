@@ -1,7 +1,7 @@
 /* 日本語 — full interface. Machine-assisted draft; any key missing falls back to English. */
 I18n.extend("ja", "日本語", {
-    "docTitle": "Astronaut Self Check — NASA Space Apps 2026 プロトタイプ",
-    "appTitle": "Astronaut Self Check",
+    "docTitle": "Astronaut Self-Assessment Panel — NASA Space Apps 2026 プロトタイプ",
+    "appTitle": "Astronaut Self-Assessment Panel",
     "appSub": "NASA Space Apps Challenge 2026 · プロトタイプ",
     "langLabel": "言語",
     "bannerStrong": "プロトタイプ — 医療機器ではありません。",

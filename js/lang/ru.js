@@ -1,7 +1,7 @@
 /* Русский — full interface. Machine-assisted draft; any key missing falls back to English. */
 I18n.extend("ru", "Русский", {
-    "docTitle": "Astronaut Self Check — прототип NASA Space Apps 2026",
-    "appTitle": "Astronaut Self Check",
+    "docTitle": "Astronaut Self-Assessment Panel — прототип NASA Space Apps 2026",
+    "appTitle": "Astronaut Self-Assessment Panel",
     "appSub": "NASA Space Apps Challenge 2026 · прототип",
     "langLabel": "Язык",
     "bannerStrong": "Прототип — не медицинское изделие.",

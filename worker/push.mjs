@@ -1,4 +1,4 @@
-// Cloudflare Worker: optional daily-reminder relay for Live Lifesaver (Web Push, no message content needed).
+// Cloudflare Worker: optional daily-reminder relay for the Astronaut Self-Assessment Panel (Web Push, no message content needed).
 // What it does: stores each device's push subscription, and every 15 minutes sends a payload-less push to devices whose
 // chosen local time has come and that have not checked in today. The app shows the localized text itself.
 // Deploy: see README ("Reminders without the app open"). Needs: a KV namespace bound as SUBS, secrets VAPID_PUBLIC (base64url
