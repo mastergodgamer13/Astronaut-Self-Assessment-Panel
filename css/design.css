@@ -236,3 +236,8 @@ html.night body { filter: brightness(.82); }
 
 /* ===== bigger touch targets ===== */
 @media (pointer: coarse) { :where(button, select, input:not([type=checkbox]):not([type=radio]), summary) { min-height: 44px; } }
+
+/* region list: keep the status pill compact and never break words mid-way */
+.region-list button { align-items: center; gap: .5rem; }
+.region-list button > span:first-child { min-width: 0; overflow-wrap: break-word; font-size: .95rem; line-height: 1.3; }
+.region-list .chip { flex: none; align-self: center; white-space: nowrap; line-height: 1.4; padding-block: .15rem; }
