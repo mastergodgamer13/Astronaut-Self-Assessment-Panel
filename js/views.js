@@ -99,10 +99,11 @@
       });
       tbody.appendChild(tr);
     });
+    var preTotal = sum.tps.filter(function (tp) { return O.groupOf(tp) === 'pre'; }).length;
     var pre = el('tr', { class: 'sumrow' }, [el('th', { scope: 'row', text: t('fl.preMean') })]);
     names.forEach(function (a) {
       var an = O.ANALYTES[a], s = sum.analytes[a];
-      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals === 0 ? 1 : 2), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: O.PRE }) })] : ['—']));
+      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals === 0 ? 1 : 2), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: preTotal }) })] : ['—']));
     });
     tbody.appendChild(pre);
     box.appendChild(el('div', { class: 'tablewrap' }, [el('table', { class: 'cmp' }, [el('thead', null, [head]), tbody])]));
@@ -448,7 +449,7 @@
     names.forEach(function (a) { head.appendChild(el('th', { scope: 'col', text: t('o9.a.' + a) })); });
     var tbody = el('tbody');
     sum.tps.forEach(function (tp, i) {
-      var tr = el('tr', null, [el('th', { scope: 'row' }, [tp, el('div', { class: 'meta', text: t('fl.group.' + (I.TIMEPOINTS.indexOf(tp) < I.PRE ? 'pre' : 'post')) })])]);
+      var tr = el('tr', null, [el('th', { scope: 'row' }, [tp, el('div', { class: 'meta', text: t('fl.group.' + ctx.Osdr.groupOf(tp)) })])]);
       names.forEach(function (a) {
         var an = I.ANALYTES[a], dd = an.decimals + 1, p = sum.analytes[a].points[i];
         if (p.value === null) { tr.appendChild(el('td', { text: '—' })); return; }
@@ -463,7 +464,7 @@
     var pre = el('tr', { class: 'sumrow' }, [el('th', { scope: 'row', text: t('fl.preMean') })]);
     names.forEach(function (a) {
       var an = I.ANALYTES[a], s = sum.analytes[a];
-      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals + 1), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: I.PRE }) })] : ['—']));
+      pre.appendChild(el('td', null, s.preN ? [s.preMean.toFixed(an.decimals + 1), el('div', { class: 'meta', text: t('fl.n', { n: s.preN, total: sum.tps.filter(function (tp) { return ctx.Osdr.groupOf(tp) === 'pre'; }).length }) })] : ['—']));
     });
     tbody.appendChild(pre);
     box.appendChild(el('div', { class: 'tablewrap' }, [el('table', { class: 'cmp' }, [el('thead', null, [head]), tbody])]));

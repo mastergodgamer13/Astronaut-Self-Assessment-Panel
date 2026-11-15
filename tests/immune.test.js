@@ -22,7 +22,7 @@ test('validate: accepts numbers and comma decimals, rounds to analyte decimals',
   assert.ok(v.ok); assert.deepStrictEqual(v.entry, { tp: 'R+1', wbc: 5.3, neut: 2685 });
 });
 test('validate: rejects bad time point, empty, text, impossible values', () => {
-  assert.deepStrictEqual(I.validate({ tp: 'R+2', wbc: 5 }).codes, [{ code: 'tp' }]);
+  assert.deepStrictEqual(I.validate({ tp: 'next week', wbc: 5 }).codes, [{ code: 'tp' }]);
   assert.deepStrictEqual(I.validate({ tp: 'L-3' }).codes, [{ code: 'empty' }]);
   assert.strictEqual(I.validate({ tp: 'L-3', wbc: 'abc' }).codes[0].code, 'notnum');
   assert.strictEqual(I.validate({ tp: 'L-3', neut: 999999 }).codes[0].code, 'range');
@@ -102,3 +102,9 @@ test('the worse of reference zone and own-baseline change wins', () => {
   assert.strictEqual(r.rangeStatus, 'ok'); assert.strictEqual(r.status, 'watch');
 });
 console.log(n + ' immune tests passed');
+
+test('custom minimum baseline: minPre decides how many pre-flight values are needed', () => {
+  const recs = [{ tp: 'L-20', wbc: 5 }, { tp: 'L-8', wbc: 6 }, { tp: 'R+3', wbc: 9 }];
+  assert.strictEqual(I.assess(recs).per.wbc.baselineStatus, 'nodata'); // default needs 3
+  const r = I.assess(recs, { minPre: 2 }).per.wbc; assert.notStrictEqual(r.baselineStatus, 'nodata'); assert.strictEqual(r.baseline.n, 2);
+});

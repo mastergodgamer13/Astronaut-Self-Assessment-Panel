@@ -13,6 +13,7 @@
  */
 (function (root) {
   'use strict';
+  var Mission = (typeof module !== 'undefined' && module.exports && typeof require === 'function') ? require('./mission.js') : root.Mission;
 
   var TIMEPOINTS = ['L-92', 'L-44', 'L-3', 'R+1', 'R+45', 'R+82', 'R+194']; // time order
   var PRE = 3; // the first three time points are pre-flight
@@ -99,8 +100,8 @@
 
   /** 'pre' | 'post' | null — same split as the dataset: first PRE time points are pre-flight. */
   function groupOf(tp) {
-    var i = TIMEPOINTS.indexOf(tp);
-    return i < 0 ? null : (i < PRE ? 'pre' : 'post');
+    var p = Mission.parseTp(tp);
+    return p ? p.phase : null; // any L-<days> is pre-flight, any R+<days> is post-flight (customizable periods)
   }
 
   /**
@@ -111,7 +112,8 @@
    */
   function validateFlight(raw) {
     raw = raw || {};
-    if (TIMEPOINTS.indexOf(raw.tp) < 0) return { ok: false, codes: [{ code: 'tp' }] };
+    if (!Mission.parseTp(raw.tp)) return { ok: false, codes: [{ code: 'tp' }] };
+    raw = Object.assign({}, raw, { tp: Mission.makeTp(Mission.parseTp(raw.tp).phase, Mission.parseTp(raw.tp).days) });
     var codes = [], rec = { tp: raw.tp }, any = false;
     Object.keys(ANALYTES).forEach(function (a) {
       var s = raw[a];
@@ -135,11 +137,11 @@
   function flightSummary(records) {
     var byTp = {};
     (records || []).forEach(function (r) { if (r && groupOf(r.tp)) byTp[r.tp] = r; });
-    var tps = TIMEPOINTS.filter(function (tp) { return byTp[tp]; });
+    var tps = Mission.sortTps(Object.keys(byTp));
     var analytes = {};
     Object.keys(ANALYTES).forEach(function (a) {
       var pre = [];
-      TIMEPOINTS.slice(0, PRE).forEach(function (tp) { if (byTp[tp] && isNum(byTp[tp][a])) pre.push(byTp[tp][a]); });
+      tps.forEach(function (tp) { if (groupOf(tp) === 'pre' && isNum(byTp[tp][a])) pre.push(byTp[tp][a]); });
       var n = pre.length;
       var mean = n ? pre.reduce(function (s, x) { return s + x; }, 0) / n : null;
       var lo = n ? Math.min.apply(null, pre) : null, hi = n ? Math.max.apply(null, pre) : null;
