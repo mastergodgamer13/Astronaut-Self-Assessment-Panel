@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261115b';
+    sc.src = 'js/osd635-genes.js?v=20261115c';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -755,6 +755,7 @@
     if (q.kind === 'vital' || q.kind === 'lab') slide.appendChild(el('p', { class: 'msg', text: t('cu.enter', { what: wizLabel(ctx, q) }) }));
     slide.appendChild(el('p', { class: 'meta', text: q.kind === 'vital' ? t('info.' + q.id + '.how') : q.kind === 'lab' ? t('cu.optional') : t('cu.q.' + q.id + '.help') }));
 
+    if (ctx.t('tools.' + q.id) !== 'tools.' + q.id) slide.appendChild(el('p', { class: 'meta tools', text: t('cu.tools') + ' ' + t('tools.' + q.id) }));
     var read;
     var cur = wiz.answers[q.id];
     if (q.kind === 'symptom' || q.kind === 'redflag') {

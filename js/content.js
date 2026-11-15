@@ -19,10 +19,10 @@
     mind:       { indicators: ['sleep', 'mood', 'headache', 'reaction'], hazards: ['isolation', 'closed', 'gravity'] },
     immune:     { indicators: [],                  hazards: ['radiation', 'isolation'], own: ['wbc', 'neut', 'lymph'], osdr: ['wbc', 'neut', 'lymph'] },
     heart:      { indicators: ['hr', 'sys', 'dia'], hazards: ['gravity'] },
-    lungs:      { indicators: ['spo2', 'rr'],      hazards: ['closed'] },
+    lungs:      { indicators: ['spo2', 'rr', 'dyspnea', 'cough', 'breathhold'],      hazards: ['closed'] },
     metabolism: { indicators: ['glucose'],         hazards: ['nutrition'] },
-    kidneys:    { indicators: ['urine', 'fluids'], hazards: ['gravity', 'nutrition'] },
-    gut:        { indicators: ['meals', 'discomfort'], hazards: ['nutrition', 'closed'] },
+    kidneys:    { indicators: ['urine', 'fluids', 'urinations', 'swelling', 'wtchange'], hazards: ['gravity', 'nutrition'] },
+    gut:        { indicators: ['meals', 'discomfort', 'nausea', 'appetite', 'stools'], hazards: ['nutrition', 'closed'] },
     whole:      { indicators: ['temp'],            hazards: ['closed'] },
     bones:      { indicators: ['exercise', 'grip'], hazards: ['gravity'] }
   };

@@ -158,3 +158,13 @@ Four more body regions, each with its own indicators and check-up slides (26 sli
 | Digestion | meals eaten today, stomach discomfort 0–3 | |
 
 Grip strength and reaction time are "baseline only": the check-up records them and says so instead of colouring them. All zones are prototype values and need flight-surgeon review. Liver and kidney lab values are not included.
+
+### Equipment-free signs and tools per organ
+
+Nine more signs that need no instrument (35 slides in total). Every slide now says which tool it needs ("Tools you need:").
+
+| Region | Added | Tool |
+|---|---|---|
+| Lungs | shortness of breath, cough, comfortable breath-hold (own baseline only) | clock with seconds; pulse oximeter only for SpO2 |
+| Kidneys & hydration | urinations per day, swelling, body-mass change over a week | mass measurement device for weight only; mirror for swelling |
+| Digestion | nausea, loss of appetite, bowel movements per day | none |
