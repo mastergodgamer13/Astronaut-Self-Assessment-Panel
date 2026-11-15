@@ -233,7 +233,7 @@
       Views.renderImmuneOwn(ctx(), $('immune-summary'), store.immuneOf(store.current()));
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
-    if (state.tab === 'osdr') Views.renderOsdr(ctx(), $('osdr'));
+    if (state.tab === 'osdr') { Views.renderInspirations(ctx(), $('inspiration')); Views.renderOsdr(ctx(), $('osdr')); Views.renderOsd635(ctx(), $('o635')); Views.renderOsd569(ctx(), $('o569')); }
     if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup }); }
     if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }

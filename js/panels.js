@@ -153,6 +153,11 @@
         var a = arrange(d, sv); Object.keys(a).forEach(function (z) { arr[z] = a[z]; });
       });
       place(arr);
+      // panels whose group has a single column cannot move sideways: hide those buttons
+      Object.keys(panels).forEach(function (id) {
+        var g = groupOf[zoneOfPanel(id)], n = zoneOrder.filter(function (z) { return groupOf[z] === g; }).length;
+        if (n < 2) Array.prototype.forEach.call(panels[id].bar.querySelectorAll('.pmove[data-dir="left"], .pmove[data-dir="right"]'), function (b) { b.hidden = true; });
+      });
       document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var m = document.querySelector('.panel-max'); if (m) setMax(m.getAttribute('data-pid'), false); } });
     };
     api.relabel = function (t) { tr = t || tr; refresh(); };

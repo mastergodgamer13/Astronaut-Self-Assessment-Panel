@@ -472,6 +472,35 @@
     box.appendChild(el('p', { class: 'meta', text: t('im.note') }));
   }
 
+  /* ---------- Inspirations: the three NASA studies used to gather ideas ---------- */
+  var INSPIRATIONS = [
+    { id: 'osd575', study: 'OSD-575', jump: 'osdr' },
+    { id: 'osd569', study: 'OSD-569', jump: 'o569' },
+    { id: 'osd635', study: 'OSD-635', jump: 'o635' }
+  ];
+  function renderInspirations(ctx, box) {
+    var t = ctx.t;
+    box.innerHTML = '';
+    box.appendChild(el('h2', { text: t('insp.title') }));
+    box.appendChild(el('p', { class: 'msg', text: t('insp.intro') }));
+    var grid = el('div', { class: 'insp-grid' });
+    INSPIRATIONS.forEach(function (s) {
+      var card = el('article', { class: 'insp-card' });
+      card.appendChild(el('h3', { text: t('insp.' + s.id + '.name') }));
+      card.appendChild(el('p', { class: 'msg', text: t('insp.' + s.id + '.what') }));
+      card.appendChild(el('p', { class: 'msg' }, [el('strong', { text: t('insp.idea') + ' ' }), t('insp.' + s.id + '.idea')]));
+      var row = el('div', { class: 'insp-links' });
+      var go = el('button', { type: 'button', class: 'ghost', text: t('insp.open') });
+      go.addEventListener('click', function () { var n = document.getElementById(s.jump); if (n) n.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      row.appendChild(go);
+      row.appendChild(el('a', { href: 'https://osdr.nasa.gov/bio/repo/data/studies/' + s.study, target: '_blank', rel: 'noopener noreferrer', text: t('insp.page', { id: s.study }) }));
+      card.appendChild(row);
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+    box.appendChild(el('p', { class: 'meta', text: t('insp.more') }));
+  }
+
   /* ---------- Real data (OSDR) ---------- */
   function renderOsdr(ctx, box) {
     var t = ctx.t, O = ctx.Osdr;
@@ -526,12 +555,6 @@
     var pp = el('div', { class: 'prepost-sub' });
     box.appendChild(pp);
     renderPrePost(ctx, pp, { sub: true });
-    var o6 = el('div', { class: 'osd635' });
-    box.appendChild(o6);
-    renderOsd635(ctx, o6);
-    var o9 = el('div', { class: 'osd569' });
-    box.appendChild(o9);
-    renderOsd569(ctx, o9);
     box.appendChild(el('p', { class: 'msg', text: t('osdr.limits') }));
     box.appendChild(el('p', { class: 'meta', text: t('osdr.fileNote') }));
     box.appendChild(el('p', { class: 'meta' }, [t('osdr.source') + ' ', el('a', { href: O.SOURCE_URL, target: '_blank', rel: 'noopener noreferrer', text: t('osdr.link') })]));
@@ -861,5 +884,5 @@
     box.appendChild(slide);
   }
 
-  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
+  root.Views = { renderCheckup: renderCheckup, renderLive: renderLive, renderCompare: renderCompare, renderOsdr: renderOsdr, renderInspirations: renderInspirations, renderPrePost: renderPrePost, renderFlight: renderFlight, renderOsd635: renderOsd635, renderOsd569: renderOsd569, renderRegionRef: renderRegionRef, renderImmuneOwn: renderImmuneOwn };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -229,3 +229,10 @@ form#missionform button { grid-column: 1 / -1; background: var(--accent); color:
 .tprow { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
 .tpchooser select, .tpchooser input { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: .4rem .5rem; font: inherit; }
 .tpchooser input[type=number] { width: 6rem; }
+
+.stack { display: grid; gap: 1rem; }
+.insp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: .8rem; margin: .6rem 0; }
+.insp-card { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: .8rem 1rem; }
+.insp-card h3 { margin: 0 0 .3rem; font-size: 1rem; }
+.insp-links { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; margin-top: .4rem; }
+.insp-links .ghost { background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: .35rem .8rem; font: inherit; font-size: .85rem; cursor: pointer; }

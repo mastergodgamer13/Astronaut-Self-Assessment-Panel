@@ -38,7 +38,7 @@
     <button class="tab active" role="tab" aria-selected="true" data-tab="checkup" data-i18n="tabCheckup">Guided check-up</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="dash" data-i18n="tabDash">Dashboard</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="compare" data-i18n="tabCompare">Compare users</button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="osdr" data-i18n="tabOsdr">Real data (NASA OSDR)</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="osdr" data-i18n="tabOsdr">Inspirations</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="live" data-i18n="tabLive">Live NASA catalog</button>
   </nav>
 
@@ -178,7 +178,12 @@
   <div id="view-compare" hidden><div class="layout1" data-zone="z-cmp"><section class="card" id="cmp" data-panel="cmp" data-panel-title="tabCompare"></section></div></div>
   <div id="view-checkup"><div class="layout1" data-zone="z-checkup"><section class="card" id="checkup" data-panel="checkup" data-panel-title="tabCheckup"></section></div></div>
   <div id="view-live" hidden><div class="layout1" data-zone="z-live"><section class="card" id="live" data-panel="live" data-panel-title="tabLive"></section></div></div>
-  <div id="view-osdr" hidden><div class="layout1" data-zone="z-osdr"><section class="card" id="osdr" data-panel="osdr" data-panel-title="tabOsdr"></section></div></div>
+  <div id="view-osdr" hidden><div class="layout1 stack" data-zone="z-osdr">
+    <section class="card" id="inspiration" data-panel="inspiration" data-panel-title="insp.title"></section>
+    <section class="card" id="osdr" data-panel="osdr" data-panel-title="insp.osd575"></section>
+    <section class="card" id="o569" data-panel="o569" data-panel-title="insp.osd569"></section>
+    <section class="card" id="o635" data-panel="o635" data-panel-title="insp.osd635"></section>
+  </div></div>
 
   <footer>
     <p data-i18n="footer">Draft explanatory texts are not yet verified against NASA HRP sources. Simulated data uses arbitrary, fictional parameters.
