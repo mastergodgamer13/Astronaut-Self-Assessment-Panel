@@ -178,6 +178,9 @@
       g.setAttribute('data-status', regionStatus(id));
       g.classList.toggle('selected', state.region === id);
     });
+    var bodyEl = $('body'), sel = state.region && bodyEl.querySelector('.region[data-region="' + state.region + '"]');
+    if (sel && sel.getBBox) { var bb = sel.getBBox(), vb = bodyEl.viewBox.baseVal; bodyEl.style.transformOrigin = (((bb.x + bb.width / 2) / vb.width) * 100) + '% ' + (((bb.y + bb.height / 2) / vb.height) * 100) + '%'; bodyEl.classList.add('zoomed'); }
+    else bodyEl.classList.remove('zoomed');
     Array.prototype.forEach.call(document.querySelectorAll('.orbit-seg'), function (g) {
       g.classList.toggle('selected', state.region === g.getAttribute('data-region'));
       g.setAttribute('data-status', regionStatus(g.getAttribute('data-region')));
@@ -490,6 +493,10 @@
 
   function init() {
     if (window.Orbit) Orbit.stars();
+    // ring, body and list light up together
+    function hl(e, on) { var n = e.target.closest && e.target.closest('[data-region]'); if (!n) return; var id = n.getAttribute('data-region');
+      Array.prototype.forEach.call(document.querySelectorAll('.orbit-seg, #body .region, #region-list button'), function (x) { if (x.getAttribute('data-region') === id) x.classList.toggle('hl', on); }); }
+    document.addEventListener('mouseover', function (e) { hl(e, true); }); document.addEventListener('mouseout', function (e) { hl(e, false); });
     I18n.init();
     store = Store.create(safeStorage(), { legacyName: t('users.legacyName') });
     var sel = $('lang');
@@ -502,9 +509,13 @@
     if (window.Display) {
       var ds = $('disp-size'), dh = $('disp-hc'), cur = Display.get();
       if (ds) { ds.value = cur.size; ds.addEventListener('change', function () { Display.set({ size: ds.value }); }); }
+      var dn = $('disp-night'), dso = $('disp-sound');
+      if (dn) { dn.checked = cur.night; dn.addEventListener('change', function () { Display.set({ night: dn.checked }); }); }
+      if (dso) { dso.checked = cur.sound; dso.addEventListener('change', function () { Display.set({ sound: dso.checked }); if (dso.checked && window.Sound) Sound.play('ok'); }); }
       if (dh) { dh.checked = cur.contrast; dh.addEventListener('change', function () { Display.set({ contrast: dh.checked }); }); }
     }
     Panels.init({ t: t });
+    if (window.Shell) Shell.init(t);
     if (window.Pwa) Pwa.init({ t: t, lang: function () { return I18n.get(); } });
     $('layout-reset').addEventListener('click', function () { Panels.reset(); });
     Array.prototype.forEach.call(document.querySelectorAll('[data-tab]'), function (b) {

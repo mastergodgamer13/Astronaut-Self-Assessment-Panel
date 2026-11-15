@@ -66,10 +66,11 @@
       var c = color(i), dash = i >= PALETTE.length - 4 ? '5 3' : '';
       var d = s.points.map(function (p, k) { return (k ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p.y).toFixed(1); }).join(' ');
       var pa = { d: d, fill: 'none', stroke: c, 'stroke-width': 2 };
-      if (dash) pa['stroke-dasharray'] = dash;
+      if (dash) pa['stroke-dasharray'] = dash; else { pa.pathLength = '100'; pa['class'] = 'draw'; }
+      pa['stroke-linejoin'] = 'round'; pa['stroke-linecap'] = 'round';
       svg.appendChild(svgEl('path', pa));
       s.points.forEach(function (p) {
-        var dot = svgEl('circle', { cx: X(p.x), cy: Y(p.y), r: 3.4, fill: c, stroke: '#101830', 'stroke-width': 1 });
+        var dot = svgEl('circle', { 'class': 'pt', cx: X(p.x), cy: Y(p.y), r: 3.4, fill: c, stroke: '#101830', 'stroke-width': 1 });
         dot.appendChild(svgEl('title', {}, s.name + ': ' + (p.title || fmtNum(p.y, opt.decimals) + (opt.unit ? ' ' + opt.unit : ''))));
         svg.appendChild(dot);
       });

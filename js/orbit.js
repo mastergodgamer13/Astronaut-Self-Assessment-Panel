@@ -38,7 +38,10 @@
       g.appendChild(s('path', { d: arc(c, c, r, a0, a1), class: 'orbit-hit' }));
       g.appendChild(s('path', { d: arc(c, c, r, a0, a1), class: 'orbit-arc', pathLength: '100' }));
       var mid = polar(c, c, r + 0, (a0 + a1) / 2);
-      g.appendChild(s('circle', { cx: mid[0], cy: mid[1], r: 3.2, class: 'orbit-dot' }));
+      g.appendChild(s('circle', { cx: mid[0], cy: mid[1], r: 6.5, class: 'orbit-dot' }));
+      var gl = s('text', { x: mid[0], y: mid[1] + 3.3, 'text-anchor': 'middle', class: 'orbit-glyph', 'aria-hidden': 'true' });
+      gl.textContent = { ok: '\u2713', watch: '!', attention: '\u25B2', nodata: '\u2013' }[seg.status] || '';
+      g.appendChild(gl);
       var t = s('title', {}); t.textContent = seg.label; g.appendChild(t);
       function pick() { if (opts.onSelect) opts.onSelect(seg.id); }
       g.addEventListener('click', pick);

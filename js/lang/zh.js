@@ -734,5 +734,17 @@ I18n.extend("zh", "中文（简体）", {
     "fl.err.empty": "请至少输入一个数值。",
     "fl.err.notnum": "{label}：请输入数字。",
     "fl.err.range": "{label}：{min}–{max} {unit}（输入错误限制，不是正常范围）。",
-    "users.legacyName": "我之前的记录"
+    "users.legacyName": "我之前的记录",
+    "disp.night": "夜间模式",
+    "disp.sound": "声音",
+    "rp.title": "机组准备状态报告",
+    "rp.first": "请先做这件事",
+    "rp.firstNone": "没有紧急事项。保持你的日常作息。",
+    "ob.title": "欢迎登舰",
+    "ob.1": "回答几个关于你的感受和测量数值的简短问题。",
+    "ob.2": "你会看到身体各部位的绿色、黄色或红色状态，以及可以自己做的简单事项。",
+    "ob.3": "这不是诊断。哪些事项重要由航天军医决定。",
+    "ob.skip": "跳过介绍",
+    "ob.start": "开始",
+    "off.banner": "你已离线。保存在此设备上的数据仍可使用。"
 });
