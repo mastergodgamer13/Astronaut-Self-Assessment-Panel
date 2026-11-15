@@ -191,3 +191,23 @@ Each astronaut flies a different schedule, so time points are no longer fixed to
 ## Inspirations
 
 The former "Real data" tab is now **Inspirations**: it introduces the three NASA OSDR studies used to gather ideas (OSD-575 blood chemistry, OSD-569 blood count and blood RNA, OSD-635 space flight vs ground gene expression), says which idea each gave this project, and shows each example in its own movable panel with a link to the study page.
+
+## Works offline, and daily reminders
+
+**Offline.** On the first visit the app stores its own files (`sw.js`); afterwards it opens with no connection, your entries stay on the device, and a banner says when you are offline. Live NASA data (Live tab, crew ranges) needs a connection and loads again when you are back online. Change the `CACHE` name in `sw.js` when you ship new files.
+
+**Install.** The app has a manifest and icons, so browsers offer "Install app" (a button also appears in the Reminders panel). On iPhone/iPad, use Share → Add to Home Screen.
+
+**Reminders** (panel "Reminders"; choose a time, allow notifications). Three levels, each honest about its limit:
+1. *App open:* a notification appears at your time if you have not checked in today.
+2. *Installed on Chromium (Android, desktop Chrome/Edge):* the browser may wake the app in the background (periodic background sync). The browser decides how often; it is not exact.
+3. *Fully closed, any device including iOS 16.4+ installed apps:* needs the small relay in `worker/push.mjs`, which you deploy yourself (free Cloudflare plan is enough):
+   ```
+   node tools/make_vapid.mjs                       # prints a public key and a private key
+   npx wrangler kv namespace create SUBS           # put the id into worker/wrangler.push.toml
+   npx wrangler secret put VAPID_PUBLIC            # the public key
+   npx wrangler secret put VAPID_PRIVATE_JWK       # the private JSON
+   npx wrangler secret put VAPID_SUBJECT           # e.g. mailto:you@example.com
+   npx wrangler deploy -c worker/wrangler.push.toml
+   ```
+   Then paste the worker address and the public key in Reminders → advanced. The relay stores only the device's push address, chosen time, time zone and language, never health values, and sends a message with no content; the app shows the text in the user's language. Tests: `node tests/push.test.mjs`.
