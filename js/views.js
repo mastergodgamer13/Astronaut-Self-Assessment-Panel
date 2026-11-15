@@ -576,12 +576,12 @@
   /** Prepares a catalog search (term + results) so the Live tab opens already showing it. */
   function searchLive(ctx, term, done) {
     live.term = term; live.res = { loading: true };
-    try { ctx.Live.setBase(window.localStorage.getItem('ll_proxy') || ''); } catch (e) { /* storage blocked */ }
+    ctx.Live.setBase(crewRelay()); // address saved in this browser, else the site default from js/config.js
     ctx.Live.search(function (u) { return window.fetch(u); }, { term: term, human: live.human, size: 50 }).then(function (r) { live.res = r; if (done) done(); });
     if (done) done();
   }
   var live = { term: '', human: true, diag: null, res: null, busy: false, proxy: '', open: null, detail: null };
-  try { live.proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { live.proxy = ''; }
+  live.proxy = crewRelay();
 
 
   function fmtSize(n) { return n === null ? '' : n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? Math.round(n / 1024) + ' KB' : n + ' B'; }

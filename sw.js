@@ -6,7 +6,7 @@
 'use strict';
 importScripts('js/remind.js');
 
-var CACHE = 'll-app-v2026-11-15ze';   // change this string when app files change
+var CACHE = 'll-app-v2026-11-15zf';   // change this string when app files change
 var STATE = 'll-state';              // small settings copy written by the page (the worker cannot read localStorage)
 var STATE_URL = new URL('ll-state.json', self.registration.scope).href;
 
