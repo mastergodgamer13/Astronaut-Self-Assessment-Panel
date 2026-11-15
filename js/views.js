@@ -826,9 +826,16 @@
     var pad = el('button', { type: 'button', class: 'rt-pad', text: t('cu.rt.start') });
     var info = el('p', { class: 'meta', 'aria-live': 'polite', text: t('cu.rt.intro') });
     wrap.appendChild(el('strong', { text: t('cu.rt.title') })); wrap.appendChild(info); wrap.appendChild(pad);
+    // colours are also set inline, so no stylesheet, cached old file or sticky touch-hover can hide them
+    function paint(kind) {
+      var c = kind === 'go' ? ['#1f9d55', '#7dffb0'] : kind === 'wait' ? ['#7a2a2a', '#ff8a8a'] : null;
+      ['background', 'border-color', 'color'].forEach(function (k, i) {
+        if (c) pad.style.setProperty(k, i === 2 ? '#fff' : c[i], 'important'); else pad.style.removeProperty(k);
+      });
+    }
     function arm() {
-      state = 'wait'; pad.className = 'rt-pad wait'; pad.textContent = t('cu.rt.wait');
-      timer = setTimeout(function () { state = 'go'; startAt = Date.now(); pad.className = 'rt-pad go'; pad.textContent = t('cu.rt.go'); }, 1200 + Math.random() * 2500);
+      state = 'wait'; pad.className = 'rt-pad wait'; paint('wait'); pad.textContent = t('cu.rt.wait');
+      timer = setTimeout(function () { state = 'go'; startAt = Date.now(); pad.className = 'rt-pad go'; paint('go'); pad.textContent = t('cu.rt.go'); }, 1200 + Math.random() * 2500);
     }
     pad.addEventListener('click', function () {
       if (state === 'idle') { trials = []; arm(); return; }
@@ -837,7 +844,7 @@
         var ms = Date.now() - startAt; trials.push(ms);
         info.textContent = t('cu.rt.trial', { n: trials.length, ms: ms });
         if (trials.length < 5) { arm(); return; }
-        state = 'idle'; pad.className = 'rt-pad'; pad.textContent = t('cu.rt.again');
+        state = 'idle'; pad.className = 'rt-pad'; paint(null); pad.textContent = t('cu.rt.again');
         var m = ctx.Checkup.reactionMedian(trials);
         info.textContent = t('cu.rt.done', { ms: m });
         if (m !== null) inp.value = String(m);

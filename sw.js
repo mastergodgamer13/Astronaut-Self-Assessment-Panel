@@ -6,7 +6,7 @@
 'use strict';
 importScripts('js/remind.js');
 
-var CACHE = 'll-app-v2026-11-15zd';   // change this string when app files change
+var CACHE = 'll-app-v2026-11-15ze';   // change this string when app files change
 var STATE = 'll-state';              // small settings copy written by the page (the worker cannot read localStorage)
 var STATE_URL = new URL('ll-state.json', self.registration.scope).href;
 
@@ -40,12 +40,12 @@ self.addEventListener('fetch', function (e) {
   if (url.origin !== self.location.origin) return; // NASA / relay requests go straight to the network
   if (/ll-state\.json$/.test(url.pathname)) return;
   if (req.mode === 'navigate') { // page: newest when online, cached copy when offline
-    e.respondWith(fetch(req).then(function (r) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put('index.html', cp); }); return r; })
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(function (r) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put('index.html', cp); }); return r; })
       .catch(function () { return caches.match('index.html'); }));
     return;
   }
   // scripts, styles, images: newest from the network when online (so updates always arrive), cached copy when offline
-  e.respondWith(fetch(req).then(function (r) { if (r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); } return r; })
+  e.respondWith(fetch(new Request(req, { cache: 'no-cache' })).then(function (r) { if (r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); } return r; })
     .catch(function () { return caches.match(req); }));
 });
 
