@@ -734,5 +734,17 @@ I18n.extend("de", "Deutsch", {
     "fl.err.empty": "Geben Sie mindestens einen Wert ein.",
     "fl.err.notnum": "{label}: Geben Sie eine Zahl ein.",
     "fl.err.range": "{label}: {min}–{max} {unit} (Grenzen für Tippfehler, keine Normbereiche).",
-    "users.legacyName": "Meine früheren Einträge"
+    "users.legacyName": "Meine früheren Einträge",
+    "disp.night": "Nachtmodus",
+    "disp.sound": "Ton",
+    "rp.title": "Bereitschaftsbericht der Crew",
+    "rp.first": "Zuerst erledigen",
+    "rp.firstNone": "Nichts Dringendes. Behalte deine Routine bei.",
+    "ob.title": "Willkommen an Bord",
+    "ob.1": "Beantworte kurze Fragen dazu, wie du dich fühlst und wie deine Messwerte aussehen.",
+    "ob.2": "Du erhältst für jeden Körperbereich einen grünen, gelben oder roten Status und einfache Dinge, die du selbst tun kannst.",
+    "ob.3": "Das ist keine Diagnose. Der Flugarzt entscheidet, was wichtig ist.",
+    "ob.skip": "Einführung überspringen",
+    "ob.start": "Los geht’s",
+    "off.banner": "Du bist offline. Auf diesem Gerät gespeicherte Daten funktionieren weiterhin."
 });

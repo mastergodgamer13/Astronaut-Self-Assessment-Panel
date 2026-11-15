@@ -5,7 +5,7 @@
 
   function clean(s) {
     s = s && typeof s === 'object' ? s : {};
-    return { size: SIZES.indexOf(s.size) >= 0 ? s.size : 'normal', contrast: s.contrast === true };
+    return { size: SIZES.indexOf(s.size) >= 0 ? s.size : 'normal', contrast: s.contrast === true, night: s.night === true, sound: s.sound === true };
   }
   function read() { try { return clean(JSON.parse(root.localStorage.getItem(KEY))); } catch (e) { return clean(null); } }
   function write(s) { try { root.localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* storage blocked: lasts for this page view */ } }
@@ -14,6 +14,7 @@
     s = clean(s); var h = root.document.documentElement;
     SIZES.forEach(function (z) { h.classList.toggle('ts-' + z, s.size === z); });
     h.classList.toggle('hc', s.contrast);
+    h.classList.toggle('night', s.night);
     return s;
   }
 

@@ -956,6 +956,7 @@
       if (!p.ok) { wiz.err = t('cu.err.' + p.code, { min: p.min, max: p.max }); errBox.textContent = wiz.err; return; }
       wiz.err = ''; errBox.textContent = ''; wiz.answers[q.id] = raw; wiz.checked[q.id] = true;
       wizFeedback(ctx, q, fb); main.textContent = t(wiz.i === N - 1 ? 'cu.review' : 'cu.next'); main.focus();
+      var fc = fb.querySelector('.chip'); if (fc && window.Sound) Sound.play(/attention/.test(fc.className) ? 'attention' : /watch/.test(fc.className) ? 'watch' : 'ok');
     });
     var nav = el('div', { class: 'wiz-nav' }, [back, skip, main]);
     slide.appendChild(nav);
@@ -989,14 +990,30 @@
 
   function renderWizResult(ctx, box, hooks, go, reset) {
     var t = ctx.t, C = ctx.Checkup, run = C.run(wiz.answers), slide = el('div', { class: 'slide' });
+    slide.appendChild(el('div', { class: 'meta organ-tag', text: t('rp.title') }));
     slide.appendChild(el('h3', { tabindex: '-1', text: t('cu.result.title') }));
+    if (window.Orbit && window.Content) {
+      var rank = { nodata: 0, ok: 1, watch: 2, attention: 3 }, worst = {};
+      run.sorted.forEach(function (it) { var o = it.q.organ; if (o && it.status !== 'nodata' && (!worst[o] || rank[it.status] > rank[worst[o]])) worst[o] = it.status; });
+      var segs = Object.keys(Content.REGIONS).map(function (id) { var st = worst[id] || 'nodata'; return { id: id, status: st, label: t('region.' + id + '.title') + ': ' + t('status.' + st) }; });
+      var assessed = run.counts.ok + run.counts.watch + run.counts.attention;
+      slide.appendChild(el('div', { class: 'orbit-wrap report-ring' }, [Orbit.ring(segs, { overall: run.overall, aria: t('cu.result.title'), centerTop: t('status.' + run.overall), centerBottom: assessed + '/' + (assessed + run.counts.nodata), onSelect: function (id) {
+        var first = slide.querySelector('.wiz-item[data-organ="' + id + '"]'); if (first) { first.setAttribute('open', 'open'); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      } })]));
+    }
+    if (run.overall === 'ok' && window.Sound) Sound.play('clear');
+    var urgent = run.sorted.filter(function (it) { return (it.status === 'attention' || it.status === 'watch') && it.actions.length; }).slice(0, 3);
+    var fx = el('div', { class: 'do-first' }, [el('strong', { text: t('rp.first') })]);
+    if (urgent.length) { var ul0 = el('ol', { class: 'msg' }); urgent.forEach(function (it) { ul0.appendChild(el('li', null, [ctx.chip(it.status), ' ', el('b', { text: wizLabel(ctx, it.q) + ': ' }), t('act.' + it.actions[0])])); }); fx.appendChild(ul0); }
+    else fx.appendChild(el('p', { class: 'msg', text: t('rp.firstNone') }));
+    slide.appendChild(fx);
     slide.appendChild(el('div', null, [ctx.chip(run.overall)]));
     slide.appendChild(el('p', { class: 'msg', text: t('cu.result.counts', run.counts) }));
     slide.appendChild(el('p', { class: 'msg', text: run.overall === 'attention' ? t('cu.result.red') : run.overall === 'watch' ? t('cu.result.yellow') : run.overall === 'ok' ? t('cu.result.allok') : t('cu.nodata') }));
     slide.appendChild(el('p', { class: 'meta', text: t('rs.note') }));
     slide.appendChild(el('strong', { text: t('cu.list') }));
     run.sorted.forEach(function (it) {
-      var d = el('details', { class: 'wiz-item' });
+      var d = el('details', { class: 'wiz-item', 'data-organ': it.q.organ || '' });
       if (it.status === 'attention' || it.status === 'watch') d.setAttribute('open', 'open');
       d.appendChild(el('summary', null, [ctx.chip(it.status), ' ', wizLabel(ctx, it.q), ': ', wizValueText(ctx, it)]));
       if (it.actions.length) { var ol = el('ol', { class: 'msg' }); it.actions.forEach(function (a) { ol.appendChild(el('li', { class: a === 'callSurgeon' ? 'act-red' : '', text: t('act.' + a) })); }); d.appendChild(ol); }

@@ -734,5 +734,17 @@ I18n.extend("fr", "Français", {
     "fl.err.empty": "Saisissez au moins une valeur.",
     "fl.err.notnum": "{label} : saisissez un nombre.",
     "fl.err.range": "{label} : {min}–{max} {unit} (limites d’erreur de frappe, pas des plages normales).",
-    "users.legacyName": "Mes saisies précédentes"
+    "users.legacyName": "Mes saisies précédentes",
+    "disp.night": "Mode nuit",
+    "disp.sound": "Son",
+    "rp.title": "Rapport de préparation de l’équipage",
+    "rp.first": "À faire en premier",
+    "rp.firstNone": "Rien d’urgent. Garde ta routine.",
+    "ob.title": "Bienvenue à bord",
+    "ob.1": "Réponds à de courtes questions sur ton état et tes mesures.",
+    "ob.2": "Tu obtiens un statut vert, jaune ou rouge pour chaque partie du corps, avec des gestes simples que tu peux faire toi-même.",
+    "ob.3": "Ce n’est pas un diagnostic. C’est le médecin de vol qui décide de ce qui compte.",
+    "ob.skip": "Passer l’introduction",
+    "ob.start": "Commencer",
+    "off.banner": "Tu es hors ligne. Les données enregistrées sur cet appareil fonctionnent toujours."
 });
