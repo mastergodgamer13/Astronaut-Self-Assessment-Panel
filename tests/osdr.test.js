@@ -53,16 +53,16 @@ test('prePost covers every analyte and matches summary()', () => {
     });
   });
 });
-test('groupOf: first 3 time points are pre-flight, the rest post-flight', () => {
+test('groupOf: L-<days> is pre-flight, R+<days> post-flight, any number of days; anything else null', () => {
   assert.deepStrictEqual(O.TIMEPOINTS.map(O.groupOf), ['pre', 'pre', 'pre', 'post', 'post', 'post', 'post']);
-  assert.strictEqual(O.groupOf('R+2'), null);
+  assert.strictEqual(O.groupOf('R+2'), 'post'); assert.strictEqual(O.groupOf('L-30'), 'pre'); assert.strictEqual(O.groupOf('X'), null); assert.strictEqual(O.groupOf('R+9999'), null);
 });
 test('validateFlight: accepts values, rounds to the dataset decimals, keeps only given analytes', () => {
   const v = O.validateFlight({ tp: 'R+45', glucose: '44.4', potassium: '5,94', sodium: '', albumin: '  ' });
   assert.ok(v.ok); assert.deepStrictEqual(v.entry, { tp: 'R+45', glucose: 44, potassium: 5.9 });
 });
 test('validateFlight: rejects unknown time point, empty record, non-numbers and impossible values', () => {
-  assert.strictEqual(O.validateFlight({ tp: 'R+2', glucose: '80' }).codes[0].code, 'tp');
+  assert.strictEqual(O.validateFlight({ tp: 'next week', glucose: '80' }).codes[0].code, 'tp');
   assert.strictEqual(O.validateFlight({ tp: 'L-3' }).codes[0].code, 'empty');
   assert.strictEqual(O.validateFlight({ tp: 'L-3', glucose: 'abc' }).codes[0].code, 'notnum');
   const r = O.validateFlight({ tp: 'L-3', glucose: '5000', sodium: '10' });
@@ -91,3 +91,10 @@ test('flightSummary: needs >= 2 pre values for vsPre, >= 1 for delta; ignores un
   assert.deepStrictEqual(O.flightSummary(undefined).tps, []);
 });
 console.log(n + ' osdr tests passed');
+
+test('custom periods: any pre-flight points form the baseline, post-flight points can fall on any day', () => {
+  const s = O.flightSummary([{ tp: 'L-30', glucose: 80 }, { tp: 'L-10', glucose: 90 }, { tp: 'L-2', glucose: 85 }, { tp: 'L-5', glucose: 95 }, { tp: 'R+7', glucose: 110 }, { tp: 'R+400', glucose: 88 }]).analytes.glucose;
+  assert.strictEqual(s.preN, 4); assert.strictEqual(s.preMean, 87.5); assert.deepStrictEqual(s.points.map(p => p.tp), ['L-30', 'L-10', 'L-5', 'L-2', 'R+7', 'R+400']);
+  assert.strictEqual(s.points[4].delta, 22.5); assert.strictEqual(s.points[4].vsPre, 'above');
+  assert.strictEqual(O.validateFlight({ tp: 'R+7', glucose: '88' }).entry.tp, 'R+7');
+});

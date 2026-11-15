@@ -10,6 +10,7 @@
   'use strict';
   var Core = (typeof module !== 'undefined' && module.exports && typeof require === 'function') ? require('./core.js') : root.Core;
   var Osdr = (typeof module !== 'undefined' && module.exports && typeof require === 'function') ? require('./osdr.js') : root.Osdr;
+  var Mission = (typeof module !== 'undefined' && module.exports && typeof require === 'function') ? require('./mission.js') : root.Mission;
   var TIMEPOINTS = Osdr.TIMEPOINTS, PRE = Osdr.PRE;
 
   var ANALYTES = {
@@ -28,7 +29,9 @@
   /** raw: { tp, wbc, neut, lymph } (strings or numbers; each optional, at least one). Same rules as Osdr.validateFlight. */
   function validate(raw) {
     raw = raw || {};
-    if (TIMEPOINTS.indexOf(raw.tp) < 0) return { ok: false, codes: [{ code: 'tp' }] };
+    var pt = Mission.parseTp(raw.tp);
+    if (!pt) return { ok: false, codes: [{ code: 'tp' }] };
+    raw = Object.assign({}, raw, { tp: Mission.makeTp(pt.phase, pt.days) });
     var codes = [], rec = { tp: raw.tp }, any = false;
     Object.keys(ANALYTES).forEach(function (a) {
       var s = raw[a];
@@ -50,11 +53,11 @@
   function summary(records) {
     var byTp = {};
     (records || []).forEach(function (r) { if (r && groupOf(r.tp)) byTp[r.tp] = r; });
-    var tps = TIMEPOINTS.filter(function (tp) { return byTp[tp]; });
+    var tps = Mission.sortTps(Object.keys(byTp));
     var analytes = {};
     Object.keys(ANALYTES).forEach(function (a) {
       var pre = [];
-      TIMEPOINTS.slice(0, PRE).forEach(function (tp) { if (byTp[tp] && isNum(byTp[tp][a])) pre.push(byTp[tp][a]); });
+      tps.forEach(function (tp) { if (groupOf(tp) === 'pre' && isNum(byTp[tp][a])) pre.push(byTp[tp][a]); });
       var n = pre.length, mean = n ? pre.reduce(function (s, x) { return s + x; }, 0) / n : null;
       var lo = n ? Math.min.apply(null, pre) : null, hi = n ? Math.max.apply(null, pre) : null;
       analytes[a] = {
@@ -87,7 +90,7 @@
    * Returns { per: { wbc: {status, ...}, ... } }.
    */
   function assess(records, cfg) {
-    var c = { watchZ: Core.DEFAULTS.watchZ, attentionZ: Core.DEFAULTS.attentionZ, recentN: Core.DEFAULTS.recentN };
+    var c = { watchZ: Core.DEFAULTS.watchZ, attentionZ: Core.DEFAULTS.attentionZ, recentN: Core.DEFAULTS.recentN, minPre: MIN_PRE };
     if (cfg) Object.keys(cfg).forEach(function (k) { c[k] = cfg[k]; });
     var sum = summary(records), per = {};
     Object.keys(ANALYTES).forEach(function (a) {
@@ -97,7 +100,7 @@
       var all = pre.concat(post), latest = all.length ? all[all.length - 1] : null;
       var rs = latest === null ? 'nodata' : Core.zoneOf(REFERENCE[a], latest);
       base.latest = latest; base.rangeStatus = rs;
-      if (pre.length < MIN_PRE) { per[a] = Object.assign(base, { status: 'nodata', reasonCode: 'immunePre', reasonParams: { have: pre.length, need: MIN_PRE } }); return; }
+      if (pre.length < c.minPre) { per[a] = Object.assign(base, { status: 'nodata', reasonCode: 'immunePre', reasonParams: { have: pre.length, need: c.minPre } }); return; }
       if (!post.length) { per[a] = Object.assign(base, { status: 'nodata', reasonCode: 'immunePost', reasonParams: {} }); return; }
       var mu = Core.mean(pre), sd = Core.sd(pre);
       if (!(sd > 0)) { per[a] = Object.assign(base, { status: 'nodata', reasonCode: 'flat', reasonParams: {} }); return; }
