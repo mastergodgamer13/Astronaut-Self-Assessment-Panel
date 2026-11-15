@@ -6,7 +6,7 @@
 'use strict';
 importScripts('js/remind.js');
 
-var CACHE = 'll-app-v2026-11-15h';   // change this string when app files change
+var CACHE = 'll-app-v2026-11-15j';   // change this string when app files change
 var STATE = 'll-state';              // small settings copy written by the page (the worker cannot read localStorage)
 var STATE_URL = new URL('ll-state.json', self.registration.scope).href;
 
@@ -44,9 +44,9 @@ self.addEventListener('fetch', function (e) {
       .catch(function () { return caches.match('index.html'); }));
     return;
   }
-  e.respondWith(caches.match(req).then(function (hit) {
-    return hit || fetch(req).then(function (r) { if (r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); } return r; });
-  }));
+  // scripts, styles, images: newest from the network when online (so updates always arrive), cached copy when offline
+  e.respondWith(fetch(req).then(function (r) { if (r.ok) { var cp = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, cp); }); } return r; })
+    .catch(function () { return caches.match(req); }));
 });
 
 /* ---------------- reminders ---------------- */

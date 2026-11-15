@@ -675,7 +675,33 @@
   }
 
   /* ---------- Guided check-up: one question per slide ---------- */
-  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '', live: { state: 'idle' } };
+  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '', live: { state: 'idle' }, auto: false };
+
+  // real crew values read from NASA are remembered in this browser, so a reload or being offline does not fall back to the bundled copies
+  var CREW_KEY = 'll_crew';
+  function crewRelay() {
+    var p = ''; try { p = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { p = ''; }
+    return p || (window.LL_CONFIG && window.LL_CONFIG.relay) || '';
+  }
+  try {
+    var saved = JSON.parse(window.localStorage.getItem(CREW_KEY) || 'null');
+    if (saved && saved.ranges && saved.studies && saved.studies.length) wiz.live = { state: 'ok', ranges: saved.ranges, studies: saved.studies, errors: [], at: saved.at, cached: true };
+  } catch (e) { /* nothing saved, or storage blocked */ }
+
+  function loadCrew(ctx, box, hooks, silent) {
+    var proxy = crewRelay(); ctx.Live.setBase(proxy);
+    var before = wiz.live;
+    if (!silent) { wiz.live = { state: 'busy', ranges: before.ranges, studies: before.studies, at: before.at, cached: before.cached }; renderCheckup(ctx, box, hooks); }
+    return ctx.Crewlive.load(function (u) { return window.fetch(u); }, ctx.Live).then(function (r) {
+      if (r.ok) {
+        var at = new Date().toISOString().slice(0, 10);
+        wiz.live = { state: 'ok', ranges: r.ranges, studies: r.studies, errors: r.errors, at: at, cached: false };
+        try { window.localStorage.setItem(CREW_KEY, JSON.stringify({ ranges: r.ranges, studies: r.studies, at: at })); } catch (e) { /* storage may be full or blocked */ }
+      } else if (before.ranges) wiz.live = { state: 'ok', ranges: before.ranges, studies: before.studies, errors: r.errors, at: before.at, cached: true, failed: true };
+      else wiz.live = { state: 'err', errors: r.errors };
+      renderCheckup(ctx, box, hooks);
+    });
+  }
 
   function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.panel ? ctx.t('lab.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
 
@@ -691,7 +717,7 @@
     var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '', liveR = wiz.live && wiz.live.ranges && wiz.live.ranges[q.id];
     if (liveR) { // real NASA file, read live
       var fl = function (a) { return a ? a[0] + '–' + a[1] : '—'; }, lb = el('div', { class: 'callout' });
-      lb.appendChild(el('strong', { text: t('cu.crew.title') + ' ' })); lb.appendChild(el('span', { class: 'badge real', text: t('cu.live.badge') }));
+      lb.appendChild(el('strong', { text: t('cu.crew.title') + ' ' })); lb.appendChild(el('span', { class: 'badge real', text: wiz.live.cached ? t('cu.live.badgeSaved', { date: wiz.live.at || '?' }) : t('cu.live.badge') }));
       lb.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: liveR.src, n: liveR.n, pre: fl(liveR.pre), post: fl(liveR.post), unit: liveR.unit }) }));
       if (liveR.lo !== null || liveR.hi !== null) lb.appendChild(el('p', { class: 'meta', text: t('cu.live.lab', { lo: liveR.lo === null ? '—' : liveR.lo, hi: liveR.hi === null ? '—' : liveR.hi, unit: liveR.unit }) }));
       return lb;
@@ -771,19 +797,21 @@
       b1.addEventListener('click', function () { reset(false); }); b2.addEventListener('click', function () { reset(true); });
       box.appendChild(b1); box.appendChild(document.createTextNode(' ')); box.appendChild(b2);
       // real crew values from NASA files (needs the relay address from the Live NASA tab); bundled copies are used otherwise
-      var lv = el('div', { class: 'callout' }), lb = el('button', { type: 'button', text: t(wiz.live.state === 'busy' ? 'cu.live.busy' : 'cu.live.load') });
+      var lv = el('div', { class: 'callout' }), lb = el('button', { type: 'button', text: t(wiz.live.state === 'busy' ? 'cu.live.busy' : 'cu.live.load') }), L = wiz.live;
       lv.appendChild(el('strong', { text: t('cu.live.title') })); lv.appendChild(el('p', { class: 'meta', text: t('cu.live.hint') }));
-      lb.addEventListener('click', function () {
-        var proxy = ''; try { proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { /* storage may be blocked */ }
-        ctx.Live.setBase(proxy); wiz.live = { state: 'busy' }; renderCheckup(ctx, box, hooks);
-        ctx.Crewlive.load(function (u) { return window.fetch(u); }, ctx.Live).then(function (r) {
-          wiz.live = r.ok ? { state: 'ok', ranges: r.ranges, studies: r.studies, errors: r.errors } : { state: 'err', errors: r.errors };
-          renderCheckup(ctx, box, hooks);
-        });
-      });
+      var rin = el('input', { type: 'url', name: 'relay', value: crewRelay(), placeholder: 'https://....workers.dev', 'aria-label': t('cu.live.relay') });
+      rin.addEventListener('change', function () { var v = rin.value.trim(); try { window.localStorage.setItem('ll_proxy', v); } catch (e) { /* storage blocked */ } ctx.Live.setBase(v); });
+      lv.appendChild(el('label', null, [el('span', { class: 'meta', text: t('cu.live.relay') }), rin]));
+      lb.addEventListener('click', function () { var v = rin.value.trim(); try { window.localStorage.setItem('ll_proxy', v); } catch (e) { /* storage blocked */ } loadCrew(ctx, box, hooks, false); });
       lv.appendChild(lb);
-      if (wiz.live.state === 'ok') lv.appendChild(el('p', { class: 'msg', text: t('cu.live.ok', { studies: wiz.live.studies.join(', ') }) + (wiz.live.errors.length ? ' ' + t('cu.live.partial', { studies: wiz.live.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
-      if (wiz.live.state === 'err') lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.err') }));
+      if (L.state === 'ok') {
+        lv.appendChild(el('p', { class: 'msg', text: (L.cached ? t('cu.live.cached', { date: L.at || '?', studies: L.studies.join(', ') }) : t('cu.live.ok', { studies: L.studies.join(', ') })) + (L.errors && L.errors.length && !L.failed ? ' ' + t('cu.live.partial', { studies: L.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
+        if (L.failed) lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.refreshFail') }));
+      } else if (L.state === 'err') {
+        lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.err') + (L.errors && L.errors[0] ? ' (' + L.errors[0].study + ': ' + L.errors[0].message + ')' : '') }));
+      } else if (!crewRelay()) lv.appendChild(el('p', { class: 'meta', text: t('cu.live.bundled') }));
+      // with a saved relay address the values refresh themselves once per visit
+      if (!wiz.auto && crewRelay() && L.state !== 'busy') { wiz.auto = true; setTimeout(function () { loadCrew(ctx, box, hooks, true); }, 0); }
       box.appendChild(lv);
       return;
     }

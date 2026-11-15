@@ -215,3 +215,7 @@ The former "Real data" tab is now **Inspirations**: it introduces the three NASA
 ## Languages
 
 Complete translations: English, Türkçe, Italiano, Español. Core-interface translations (navigation, guided check-up, statuses, self-care actions, body regions, indicators, reminders, offline notice): Français, Deutsch, Русский (Roscosmos), 日本語 (JAXA), 中文 (Tiangong). Anything not translated yet (for example the NASA study pages) shows in English, so nothing is empty. These translations were not reviewed by native-speaking medical staff; please have them checked before real use. To add a language, copy `js/lang/fr.js`, translate the values, add the script tag in `index.html` and the notification text in `js/remind.js`.
+
+## Real crew values from NASA: remembered, and a default relay
+
+The check-up start page now has a **relay address** field of its own (same saved address as the Live NASA tab). With an address saved, the real crew values refresh by themselves once per visit, and the last successful load is **kept in this browser** (shown as "FROM NASA — saved <date>"), so a reload or being offline no longer drops back to the bundled copies. To give every visitor live values without typing, put your deployed relay address in `js/config.js` (`relay: 'https://….workers.dev'`). The relay must be the current `worker/osdr-proxy.js` (it must forward `/geode-py/`); redeploy it if it is older.
