@@ -8,7 +8,7 @@ The **Guided check-up** tab (now the first tab) asks 15 questions, one per slide
 
 **Guided demo astronaut:** a fictional astronaut with made-up answers (mostly green, five yellow, one red) walks through the same slides; demo answers are never saved. The old simulated 30-day dashboard toggle was removed (the guided demo replaces it; `Demo.generate` stays for tests). Everything in the demo is fictional and labelled so.
 
-**Not built yet:** loading crew values live from NASA's data files (the slides use the verified copies of OSD-569/OSD-575 bundled in the app; live file loading needs the relay update), and every wording of the zones and actions still needs flight-surgeon review.
+**Not built yet:** every wording of the zones and actions still needs flight-surgeon review. Live loading of crew values from NASA files works once your relay is current (see "Real crew values from NASA" below).
 
 ## Bone and muscle indicator (new)
 
