@@ -149,3 +149,20 @@ body > header, body > main, body > nav, body > .tabs, body > footer { position: 
 html.hc #starfield { display: none; }
 html.hc .orbit-core { fill: #000; filter: none; }
 @media print { #starfield, .orbit-wrap { display: none; } }
+
+/* ===== Orbit background: nebula + Earth limb, tinted by overall status ===== */
+html { --mood: 108,184,255; }
+html[data-mood=ok] { --mood: 70,217,160; } html[data-mood=watch] { --mood: 245,195,92; } html[data-mood=attention] { --mood: 255,123,123; }
+body::before { content: ""; position: fixed; inset: -20%; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(40% 35% at 18% 22%, rgba(120,90,255,.16), transparent 70%),
+    radial-gradient(35% 30% at 82% 30%, rgba(var(--mood),.14), transparent 70%),
+    radial-gradient(45% 35% at 60% 85%, rgba(40,120,255,.10), transparent 70%);
+  filter: blur(20px); animation: nebula 70s ease-in-out infinite alternate; transition: background 1.5s; }
+@keyframes nebula { to { transform: translate3d(3%, -2%, 0) rotate(4deg) scale(1.08); } }
+body::after { content: ""; position: fixed; left: -25%; right: -25%; bottom: -62vmin; height: 80vmin; z-index: 0; pointer-events: none;
+  border-radius: 50%; background: radial-gradient(closest-side, #060a14 94%, transparent 100%);
+  box-shadow: 0 -2px 3px rgba(var(--mood),.55), 0 -10px 40px rgba(var(--mood),.35), 0 -40px 120px rgba(var(--mood),.18); transition: box-shadow 1.5s; }
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+html.hc body::before, html.hc body::after { display: none; }
+@media print { body::before, body::after { display: none; } }
