@@ -190,15 +190,12 @@ html.hc body::before, html.hc body::after { display: none; }
 .region.hl .zone { fill-opacity: .5; filter: drop-shadow(0 0 7px var(--zc)); }
 .region.hl .lbl { fill: #fff; font-weight: 700; }
 .region-list button.hl { border-color: var(--accent); }
-.bodywrap { overflow: hidden; border-radius: 14px; }
-#body { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-#body.zoomed { transform: scale(1.28); }
 /* not colour alone: status also changes the outline pattern */
 .region[data-status=watch] .zone { stroke-dasharray: 5 3; }
 .region[data-status=attention] .zone { stroke-width: 2.4; animation: zone-breathe 2s ease-in-out infinite; }
 .region[data-status=nodata] .zone { stroke-dasharray: 1 4; }
 @keyframes zone-breathe { 50% { fill-opacity: .42; filter: drop-shadow(0 0 8px var(--attention)); } }
-@media (prefers-reduced-motion: reduce) { #body, #body.zoomed { transition: none; } .region[data-status=attention] .zone { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .region[data-status=attention] .zone { animation: none; } }
 
 /* ===== charts ===== */
 .chart { background: linear-gradient(180deg, #0c1322, #080c16); border: 1px solid var(--line); border-radius: 12px; }
