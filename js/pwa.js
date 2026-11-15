@@ -122,7 +122,32 @@
     $('remind-test').addEventListener('click', function () {
       ask().then(function (p) { if (p === 'granted') showNow().then(function () { msg(t('remind.test.sent'), 'good'); }); else msg(t(p === 'denied' ? 'remind.denied' : 'remind.unsupported'), 'err'); });
     });
+    $('remind-check').addEventListener('click', checkSetup);
     $('remind-install').addEventListener('click', function () { if (deferred) { deferred.prompt(); deferred = null; $('remind-install').hidden = true; } });
+  }
+
+  /** "Check my reminder setup": gathers the facts, then Diag.reminderReport names the first step that fails. */
+  function checkSetup() {
+    var s = settings(), list = $('remind-report'); if (!list) return;
+    list.innerHTML = '';
+    var f = { notif: 'Notification' in root, perm: 'Notification' in root ? Notification.permission : 'denied', sw: !!(reg && reg.active), push: !!(reg && reg.pushManager), relay: s.relay, vapid: s.vapid, sub: false, accepts: null };
+    var subP = f.push ? reg.pushManager.getSubscription().catch(function () { return null; }) : Promise.resolve(null);
+    subP.then(function (sub) {
+      f.sub = !!sub;
+      if (!(sub && s.relay)) return;
+      return post(s.relay + '/push/subscribe', { sub: { endpoint: sub.endpoint }, time: s.time, tz: -new Date().getTimezoneOffset(), lang: lang() })
+        .then(function (r) { f.accepts = r.ok; }).catch(function () { f.accepts = false; });
+    }).then(function () {
+      var rep = Diag.reminderReport(f);
+      rep.steps.forEach(function (st) {
+        var li = document.createElement('li');
+        li.textContent = (st.ok === true ? '✓ ' : st.ok === false ? '✗ ' : '– ') + t('diag.rem.step.' + st.id) + (st.ok === false ? ' — ' + t('diag.rem.hint.' + st.id) : st.ok === null ? ' (' + t('diag.rem.skipped') + ')' : '');
+        if (st.ok === false) li.className = 'form-msg err';
+        list.appendChild(li);
+      });
+      var done = document.createElement('li');
+      done.textContent = rep.first ? t('diag.rem.partial') : t('diag.rem.allgood'); list.appendChild(done);
+    });
   }
 
   function banner() {
