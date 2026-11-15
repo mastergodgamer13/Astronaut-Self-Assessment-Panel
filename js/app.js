@@ -59,6 +59,11 @@
       bandHi = b.mean + Core.DEFAULTS.watchZ * b.sd;
       lo = Math.min(lo, bandLo); hi = Math.max(hi, bandHi);
     }
+    var rf = Core.REFERENCE[ind.id];
+    if (rf) { // include the green zone in the view when it is near the data; very wide zones are simply cut off at the chart edge
+      var span = (hi - lo) || 1;
+      rf.ok.forEach(function (v) { if (v >= lo - span && v <= hi + span) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
+    }
     if (hi === lo) { hi += 1; lo -= 1; }
     var pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
     function X(i) { return L + (W - L - R) * (i / (pts.length - 1)); }
@@ -70,6 +75,12 @@
       svg.appendChild(n); return n;
     }
 
+    if (rf) { // zones behind the line: yellow = inside the watch limits, green = usual (text labels top right, colour is not the only cue)
+      var yLo = Math.max(lo, rf.watch[0]), yHi = Math.min(hi, rf.watch[1]), gLo = Math.max(lo, rf.ok[0]), gHi = Math.min(hi, rf.ok[1]);
+      if (yHi > yLo) add('rect', { x: L, y: Y(yHi), width: W - L - R, height: Y(yLo) - Y(yHi), fill: '#f4e04d', opacity: 0.14 });
+      if (gHi > gLo) add('rect', { x: L, y: Y(gHi), width: W - L - R, height: Y(gLo) - Y(gHi), fill: '#3ddc97', opacity: 0.18 });
+      add('text', { x: W - R, y: T + 9, 'text-anchor': 'end', fill: '#9fb0cc' }, t('cu.chart.zoneOk') + ' / ' + t('cu.chart.zoneWatch'));
+    }
     if (bandLo !== null) {
       add('rect', { x: L, y: Y(bandHi), width: W - L - R, height: Y(bandLo) - Y(bandHi), fill: '#6aa8ff', opacity: 0.14 });
       add('line', { x1: L, x2: W - R, y1: Y(b.mean), y2: Y(b.mean), stroke: '#6aa8ff', 'stroke-dasharray': '4 4', opacity: 0.7 });
@@ -134,6 +145,22 @@
       t('overall.counts', { ok: c.ok, watch: c.watch, attention: c.attention, nodata: c.nodata, total: assessment.total }) + ' ' + t('overall.note')
     ]);
     box.appendChild(line); box.appendChild(detail);
+    // what changed since the previous check-in
+    var ch = Trend.changes(entries()), cl = el('div', { class: 'changes' });
+    if (!ch) cl.appendChild(el('p', { class: 'meta', text: t('chg.none') }));
+    else {
+      cl.appendChild(el('strong', { text: t('chg.title', { prev: ch.prev, latest: ch.latest }) + ' ' }));
+      cl.appendChild(document.createTextNode(ch.items.length ? t('chg.counts', { worse: ch.worse, better: ch.better }) : t('chg.same')));
+      if (ch.items.length) {
+        var ul = el('ul', { class: 'msg' });
+        ch.items.slice(0, 6).forEach(function (i) {
+          var ind = Core.getIndicator(i.id);
+          ul.appendChild(el('li', { text: (i.dir === 'worse' ? '▲ ' : '▼ ') + indLabel(ind) + ': ' + t('status.' + i.from) + ' → ' + t('status.' + i.to) + ' (' + fmt(i.was, ind) + ' → ' + fmt(i.now, ind) + ' ' + unitOf(ind) + ')' }));
+        });
+        cl.appendChild(ul);
+      }
+    }
+    box.appendChild(cl);
   }
 
   function renderBody() {
@@ -211,7 +238,7 @@
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Diag: Diag, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Diag: Diag, Research: Research, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 
@@ -220,7 +247,7 @@
       var on = b.getAttribute('data-tab') === state.tab;
       b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on));
     });
-    ['checkup', 'dash', 'compare', 'osdr', 'live'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
+    ['checkup', 'dash', 'compare', 'osdr', 'live', 'review'].forEach(function (id) { $('view-' + id).hidden = state.tab !== id; });
   }
 
   function render() {
@@ -235,7 +262,8 @@
     }
     if (state.tab === 'compare') Views.renderCompare(ctx(), $('cmp'));
     if (state.tab === 'osdr') { Views.renderInspirations(ctx(), $('inspiration')); Views.renderOsdr(ctx(), $('osdr')); Views.renderOsd635(ctx(), $('o635')); Views.renderOsd569(ctx(), $('o569')); }
-    if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup }); }
+    if (state.tab === 'checkup' && !state.checkupDrawn) { state.checkupDrawn = true; Views.renderCheckup(ctx(), $('checkup'), { save: saveCheckup, openLive: function (term) { state.tab = 'live'; state.liveDrawn = false; Views.searchLive(ctx(), term, render); } }); }
+    if (state.tab === 'review') Views.renderReview(ctx(), $('review'));
     if (state.tab === 'live' && !state.liveDrawn) { state.liveDrawn = true; Views.renderLive(ctx(), $('live')); }
   }
 
@@ -457,6 +485,11 @@
     buildMissionForm();
     buildFlightForm();
     buildImmuneForm();
+    if (window.Display) {
+      var ds = $('disp-size'), dh = $('disp-hc'), cur = Display.get();
+      if (ds) { ds.value = cur.size; ds.addEventListener('change', function () { Display.set({ size: ds.value }); }); }
+      if (dh) { dh.checked = cur.contrast; dh.addEventListener('change', function () { Display.set({ contrast: dh.checked }); }); }
+    }
     Panels.init({ t: t });
     if (window.Pwa) Pwa.init({ t: t, lang: function () { return I18n.get(); } });
     $('layout-reset').addEventListener('click', function () { Panels.reset(); });

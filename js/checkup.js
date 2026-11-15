@@ -27,6 +27,9 @@
     { id: 'glucose', kind: 'vital', organ: 'metabolism' }, { id: 'temp', kind: 'vital', organ: 'whole' },
     { id: 'exercise', kind: 'vital', organ: 'bones' }, { id: 'grip', kind: 'vital', organ: 'bones' },
     { id: 'pain', kind: 'symptom', organ: 'bones' }, { id: 'fatigue', kind: 'symptom', organ: 'bones' },
+    { id: 'eyes', kind: 'symptom', organ: 'mind' }, { id: 'hearing', kind: 'symptom', organ: 'mind' },
+    { id: 'skin', kind: 'symptom', organ: 'whole' }, { id: 'teeth', kind: 'symptom', organ: 'whole' },
+    { id: 'radiation', kind: 'redflag', organ: null },
     { id: 'emergency', kind: 'redflag', organ: null },
     { id: 'wbc', kind: 'lab', organ: 'immune' }, { id: 'neut', kind: 'lab', organ: 'immune' }, { id: 'lymph', kind: 'lab', organ: 'immune' }
   ];
@@ -78,6 +81,11 @@
     dizzy:   { any: ['sitDown', 'slowPosture', 'hydrate', 'tellCrew'] },
     vision:  { any: ['logVision', 'eyeTest', 'tellCrew'] },
     pain:    { any: ['exercise', 'stretch', 'nutrition', 'tellCrew'] },
+    eyes:    { any: ['restEyes', 'logVision', 'eyeTest', 'tellCrew'] },
+    hearing: { any: ['quietPlace', 'logHearing', 'tellCrew'] },
+    skin:    { any: ['cleanSkin', 'logSkin', 'tellCrew'] },
+    teeth:   { any: ['brushTeeth', 'logTeeth', 'tellCrew'] },
+    radiation: { any: ['shelter', 'tellCrew'] },
     emergency: { any: ['stopActivity'] },
     wbc:     { low: ['hygiene', 'sleepSchedule', 'nutrition', 'reportLab'], high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
     neut:    { low: ['hygiene', 'sleepSchedule', 'nutrition', 'reportLab'], high: ['rest', 'hydrate', 'hygiene', 'reportLab'] },
@@ -185,6 +193,6 @@
     return { n: Object.keys(crew).length, pre: mm(pre), post: mm(post) };
   }
 
-  var api = { QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
+  var api = { PCT: PCT, QUESTIONS: QUESTIONS, ACTIONS: ACTIONS, question: question, limits: limits, zonesOf: zonesOf, parse: parse, evaluate: evaluate, advice: advice, run: run, toEntry: toEntry, reactionMedian: reactionMedian, crewRange: crewRange };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Checkup = api;
 })(typeof window !== 'undefined' ? window : globalThis);

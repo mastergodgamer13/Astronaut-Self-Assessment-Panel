@@ -8,7 +8,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="css/style.css?v=20261115n">
+  <link rel="stylesheet" href="css/style.css?v=20261115q">
 </head>
 <body>
   <div id="net-banner" class="net-banner" role="status" hidden></div>
@@ -28,6 +28,8 @@
     </div>
     <div class="top-right">
       <button id="layout-reset" type="button" class="ghost" data-i18n="panel.reset">Reset layout</button>
+      <label class="lang"><span class="sr-only" data-i18n="disp.size">Text size</span><select id="disp-size"><option value="normal" data-i18n="disp.normal">Normal text</option><option value="large" data-i18n="disp.large">Large text</option><option value="xlarge" data-i18n="disp.xlarge">Extra large text</option></select></label>
+      <label class="hcbox"><input type="checkbox" id="disp-hc"> <span data-i18n="disp.hc">High contrast</span></label>
       <label class="lang"><span class="sr-only" data-i18n="langLabel">Language</span><select id="lang"></select></label>
     </div>
   </header>
@@ -45,6 +47,7 @@
     <button class="tab" role="tab" aria-selected="false" data-tab="compare" data-i18n="tabCompare">Compare users</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="osdr" data-i18n="tabOsdr">Inspirations</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="live" data-i18n="tabLive">Live NASA catalog</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="review" data-i18n="tabReview">Reviewer view</button>
   </nav>
 
   <div id="view-dash">
@@ -202,6 +205,7 @@
 
   <div id="view-compare" hidden><div class="layout1" data-zone="z-cmp"><section class="card" id="cmp" data-panel="cmp" data-panel-title="tabCompare"></section></div></div>
   <div id="view-checkup"><div class="layout1" data-zone="z-checkup"><section class="card" id="checkup" data-panel="checkup" data-panel-title="tabCheckup"></section></div></div>
+  <div id="view-review" hidden><div class="layout1" data-zone="z-review"><section class="card" id="review" data-panel="review" data-panel-title="tabReview"></section></div></div>
   <div id="view-live" hidden><div class="layout1" data-zone="z-live"><section class="card" id="live" data-panel="live" data-panel-title="tabLive"></section></div></div>
   <div id="view-osdr" hidden><div class="layout1 stack" data-zone="z-osdr">
     <section class="card" id="inspiration" data-panel="inspiration" data-panel-title="insp.title"></section>
@@ -215,33 +219,36 @@
        Status levels use configurable statistical cut-offs (|z| ≥ 2 and ≥ 3 relative to your first 7 readings), not clinical thresholds.</p>
   </footer>
 
-  <script src="js/config.js?v=20261115n"></script>
-  <script src="js/i18n.js?v=20261115n"></script>
-  <script src="js/lang/fr.js?v=20261115n"></script>
-  <script src="js/lang/de.js?v=20261115n"></script>
-  <script src="js/lang/ru.js?v=20261115n"></script>
-  <script src="js/lang/ja.js?v=20261115n"></script>
-  <script src="js/lang/zh.js?v=20261115n"></script>
-  <script src="js/core.js?v=20261115n"></script>
-  <script src="js/remind.js?v=20261115n"></script>
-  <script src="js/mission.js?v=20261115n"></script>
-  <script src="js/store.js?v=20261115n"></script>
-  <script src="js/osdr.js?v=20261115n"></script>
-  <script src="js/expression.js?v=20261115n"></script>
-  <script src="js/osd635.js?v=20261115n"></script>
-  <script src="js/osd569-data.js?v=20261115n"></script>
-  <script src="js/osd569.js?v=20261115n"></script>
-  <script src="js/live.js?v=20261115n"></script>
-  <script src="js/immune.js?v=20261115n"></script>
-  <script src="js/crewlive.js?v=20261115n"></script>
-  <script src="js/diag.js?v=20261115n"></script>
-  <script src="js/checkup.js?v=20261115n"></script>
-  <script src="js/panels.js?v=20261115n"></script>
-  <script src="js/charts.js?v=20261115n"></script>
-  <script src="js/demo.js?v=20261115n"></script>
-  <script src="js/content.js?v=20261115n"></script>
-  <script src="js/views.js?v=20261115n"></script>
-  <script src="js/pwa.js?v=20261115n"></script>
-  <script src="js/app.js?v=20261115n"></script>
+  <script src="js/config.js?v=20261115q"></script>
+  <script src="js/i18n.js?v=20261115q"></script>
+  <script src="js/lang/fr.js?v=20261115q"></script>
+  <script src="js/lang/de.js?v=20261115q"></script>
+  <script src="js/lang/ru.js?v=20261115q"></script>
+  <script src="js/lang/ja.js?v=20261115q"></script>
+  <script src="js/lang/zh.js?v=20261115q"></script>
+  <script src="js/core.js?v=20261115q"></script>
+  <script src="js/remind.js?v=20261115q"></script>
+  <script src="js/mission.js?v=20261115q"></script>
+  <script src="js/store.js?v=20261115q"></script>
+  <script src="js/osdr.js?v=20261115q"></script>
+  <script src="js/expression.js?v=20261115q"></script>
+  <script src="js/osd635.js?v=20261115q"></script>
+  <script src="js/osd569-data.js?v=20261115q"></script>
+  <script src="js/osd569.js?v=20261115q"></script>
+  <script src="js/live.js?v=20261115q"></script>
+  <script src="js/immune.js?v=20261115q"></script>
+  <script src="js/crewlive.js?v=20261115q"></script>
+  <script src="js/diag.js?v=20261115q"></script>
+  <script src="js/trend.js?v=20261115q"></script>
+  <script src="js/research.js?v=20261115q"></script>
+  <script src="js/checkup.js?v=20261115q"></script>
+  <script src="js/panels.js?v=20261115q"></script>
+  <script src="js/charts.js?v=20261115q"></script>
+  <script src="js/demo.js?v=20261115q"></script>
+  <script src="js/content.js?v=20261115q"></script>
+  <script src="js/views.js?v=20261115q"></script>
+  <script src="js/display.js?v=20261115q"></script>
+  <script src="js/pwa.js?v=20261115q"></script>
+  <script src="js/app.js?v=20261115q"></script>
 </body>
 </html>
