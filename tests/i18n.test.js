@@ -12,9 +12,9 @@ const allCodes = I18n.LANGS.map(l => l.code);
 const codes = ['en', 'tr', 'it', 'es']; // complete translations
 const ph = s => (s.match(/\{\w+\}/g) || []).sort().join(',');
 
-test('languages: four complete (en tr it es) and five core-interface (fr de ru ja zh)', () => assert.deepStrictEqual(allCodes, ['en', 'tr', 'it', 'es'].concat(PARTIAL)));
-test('partial languages: same key set, only keys English has, placeholders match, none empty, safety texts present', () => {
-  const ref = Object.keys(I18n.DICT.ru).sort();
+test('languages: all nine complete (en tr it es fr de ru ja zh)', () => assert.deepStrictEqual(allCodes, ['en', 'tr', 'it', 'es'].concat(PARTIAL)));
+test('fr de ru ja zh: complete — exactly the English key set, placeholders match, none empty, safety texts present', () => {
+  const ref = Object.keys(I18n.DICT.en).sort();
   PARTIAL.forEach(c => {
     const D = I18n.DICT[c];
     assert.deepStrictEqual(Object.keys(D).sort(), ref, c);
@@ -32,8 +32,9 @@ test('partial languages: same key set, only keys English has, placeholders match
 });
 test('untranslated keys fall back to English, translated ones do not', () => {
   assert.strictEqual(I18n.set('fr'), true);
-  const untranslated = Object.keys(I18n.DICT.en).find(k => I18n.DICT.fr[k] === undefined);
-  assert.strictEqual(I18n.t(untranslated), I18n.DICT.en[untranslated]);
+  const k = 'cu.yes', saved = I18n.DICT.fr[k]; delete I18n.DICT.fr[k]; // simulate a key that is not translated yet
+  assert.strictEqual(I18n.t(k), I18n.DICT.en[k]);
+  I18n.DICT.fr[k] = saved;
   assert.strictEqual(I18n.t('cu.yes'), 'Oui');
   I18n.set('en');
 });
