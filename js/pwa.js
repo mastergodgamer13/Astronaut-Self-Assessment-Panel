@@ -10,7 +10,12 @@
   var deferred = null, reg = null;
 
   function ls(op, k, v) { try { return op === 'get' ? root.localStorage.getItem(k) : root.localStorage.setItem(k, v); } catch (e) { return null; } }
-  function settings() { var r; try { r = JSON.parse(ls('get', KEY) || '{}'); } catch (e) { r = {}; } var c = Remind.clean(r); return c.ok ? c.settings : Remind.clean({}).settings; }
+  /** Saved settings, with the site defaults (js/config.js) filling an empty service address or key. */
+  function withDefaults(s) {
+    var d = (root.LL_CONFIG && root.LL_CONFIG.reminders) || {};
+    return { enabled: s.enabled, time: s.time, relay: s.relay || String(d.url || '').replace(/\/+$/, ''), vapid: s.vapid || d.vapid || '' };
+  }
+  function settings() { var r; try { r = JSON.parse(ls('get', KEY) || '{}'); } catch (e) { r = {}; } var c = Remind.clean(r); return withDefaults(c.ok ? c.settings : Remind.clean({}).settings); }
   function lastCheckin() { return ls('get', LAST) || null; }
   function $(id) { return document.getElementById(id); }
   function msg(text, cls) { var m = $('remind-msg'); if (m) { m.textContent = text || ''; m.className = 'form-msg' + (cls ? ' ' + cls : ''); } }
@@ -90,8 +95,10 @@
 
   function fill() {
     var f = $('remindform'); if (!f) return; var s = settings();
+    var raw; try { raw = JSON.parse(ls('get', KEY) || '{}'); } catch (e) { raw = {}; }
     f.querySelector('[name=enabled]').checked = s.enabled; f.querySelector('[name=time]').value = s.time;
-    f.querySelector('[name=relay]').value = s.relay; f.querySelector('[name=vapid]').value = s.vapid;
+    f.querySelector('[name=relay]').value = raw.relay || ''; f.querySelector('[name=vapid]').value = raw.vapid || '';
+    f.querySelector('[name=relay]').placeholder = (root.LL_CONFIG && root.LL_CONFIG.reminders && root.LL_CONFIG.reminders.url) || 'https://';
   }
 
   function relabel() {
@@ -110,13 +117,14 @@
       if (!c.ok) { msg(t('remind.err.' + c.code), 'err'); return; }
       ls('set', KEY, JSON.stringify(c.settings));
       var done = function (extra) { shareState(); msg(t('remind.saved') + (extra ? ' ' + extra : ''), 'good'); };
-      if (!c.settings.enabled) { unsubscribePush(c.settings).then(function () { done(''); }); return; }
+      var eff = withDefaults(c.settings);
+      if (!c.settings.enabled) { unsubscribePush(eff).then(function () { done(''); }); return; }
       ask().then(function (p) {
         if (p === 'denied') { msg(t('remind.denied'), 'err'); return; }
         if (p === 'unsupported') { msg(t('remind.unsupported'), 'err'); return; }
         if (p !== 'granted') return;
         registerPeriodic();
-        subscribePush(c.settings).then(function (r) { done(t(r === 'on' ? 'remind.push.on' : r === 'fail' ? 'remind.push.fail' : 'remind.push.off')); });
+        subscribePush(eff).then(function (r) { done(t(r === 'on' ? 'remind.push.on' : r === 'fail' ? 'remind.push.fail' : 'remind.push.off')); });
       });
     });
     $('remind-test').addEventListener('click', function () {

@@ -237,3 +237,5 @@ The address is the address of **your own** Cloudflare Worker that runs `worker/p
 5. **Add the keys:** Worker → Settings → **Variables and Secrets** → Add: `VAPID_PUBLIC` (type Text; the public key), `VAPID_PRIVATE_JWK` (type **Secret**; the private key), `VAPID_SUBJECT` (type Text; `mailto:` and your e-mail address). Deploy.
 6. **Run it every 15 minutes:** Worker → Settings → **Trigger Events** → Add → **Cron Triggers** → `*/15 * * * *` → Save.
 7. **Use it:** copy the Worker address (`https://lifesaver-reminders.<your-name>.workers.dev`). In the app: Reminders → advanced → paste it as the service address, paste the public key, tick "Remind me every day", **Save reminders**, then press **Check my reminder setup**: all eight lines should show ✓.
+
+Site-wide defaults live in `js/config.js` (`reminders.url` = your reminder worker address, `reminders.vapid` = its public key; both public by design). With them set, visitors only tick "Remind me every day". Values typed in Reminders → advanced take priority. Never put the private key in this file.
