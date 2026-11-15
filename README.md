@@ -225,3 +225,15 @@ The check-up start page now has a **relay address** field of its own (same saved
 - **Check relay** (check-up start page and Live NASA tab): asks your relay whether it is the current `worker/osdr-proxy.js` (it answers `/health` with version 2) and whether NASA answers through it. An old relay is named as old, with the redeploy steps. After updating the worker code, redeploy it once so `/health` exists.
 - **Check my reminder setup** (Reminders panel): lists eight steps (notifications supported and allowed, service worker running, push supported, relay address, public key, subscription, relay accepted this device) and marks the first one that fails with what to do.
 - `node tests/push-sim.test.mjs` runs the reminder relay against a fake push service and fake storage: signed content-free pushes, once per day, skipped after a check-in, removed on 410, retried on 503. It cannot replace one real notification on a real phone.
+
+## Getting a reminder service address (no command line)
+
+The address is the address of **your own** Cloudflare Worker that runs `worker/push.mjs`. About 10 minutes, free plan.
+
+1. **Make the keys:** open `tools/vapid.html` (on the site: `…/live-lifesaver/tools/vapid.html`), press **Make my keys**. Keep the page open; you need both values below.
+2. **Create the Worker:** Cloudflare dashboard → Workers & Pages → Create → **Create Worker** → name it (for example `lifesaver-reminders`) → Deploy → **Edit code** → delete everything → paste the whole of `worker/push.mjs` → Deploy.
+3. **Create storage:** Storage & Databases → **KV** → Create a namespace named `lifesaver-subs`.
+4. **Connect them:** open the Worker → Settings → **Bindings** → Add → **KV namespace** → variable name `SUBS` (exactly) → choose `lifesaver-subs` → Save.
+5. **Add the keys:** Worker → Settings → **Variables and Secrets** → Add: `VAPID_PUBLIC` (type Text; the public key), `VAPID_PRIVATE_JWK` (type **Secret**; the private key), `VAPID_SUBJECT` (type Text; `mailto:` and your e-mail address). Deploy.
+6. **Run it every 15 minutes:** Worker → Settings → **Trigger Events** → Add → **Cron Triggers** → `*/15 * * * *` → Save.
+7. **Use it:** copy the Worker address (`https://lifesaver-reminders.<your-name>.workers.dev`). In the app: Reminders → advanced → paste it as the service address, paste the public key, tick "Remind me every day", **Save reminders**, then press **Check my reminder setup**: all eight lines should show ✓.

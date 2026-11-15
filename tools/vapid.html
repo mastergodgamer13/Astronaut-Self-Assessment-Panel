@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reminder keys — Live Lifesaver</title>
+<style>body{font:16px/1.5 system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;background:#0b1220;color:#e6edf7}
+textarea{width:100%;min-height:6rem;background:#0f1a2e;color:#e6edf7;border:1px solid #2a3a58;border-radius:8px;padding:.6rem;font:13px/1.4 ui-monospace,monospace;box-sizing:border-box}
+button{font:inherit;padding:.5rem 1rem;border-radius:8px;border:1px solid #5ab4ff;background:#12233f;color:#e6edf7;cursor:pointer}
+.warn{border-left:4px solid #ffb347;padding:.5rem .8rem;background:#161f33;margin:1rem 0}small{color:#9fb0cc}</style></head><body>
+<h1>Reminder keys</h1>
+<p>Makes the two keys the reminder worker needs. Everything happens in this page, in your browser: nothing is sent anywhere.</p>
+<button id="go" type="button">Make my keys</button>
+<h2>1. Public key <small>(Cloudflare variable <code>VAPID_PUBLIC</code>, and the "Public key" box in the app)</small></h2>
+<textarea id="pub" readonly aria-label="Public key"></textarea>
+<h2>2. Private key <small>(Cloudflare secret <code>VAPID_PRIVATE_JWK</code>)</small></h2>
+<textarea id="priv" readonly aria-label="Private key"></textarea>
+<div class="warn"><strong>Keep the private key secret.</strong> Paste it only into Cloudflare. Do not put it in the repository, in a message, or in the app. If it leaks, make new keys and subscribe your devices again.</div>
+<script>
+function b64u(buf){return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+document.getElementById('go').addEventListener('click',async function(){
+  var kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+  document.getElementById('pub').value=b64u(await crypto.subtle.exportKey('raw',kp.publicKey));
+  document.getElementById('priv').value=JSON.stringify(await crypto.subtle.exportKey('jwk',kp.privateKey));
+});
+</script></body></html>
