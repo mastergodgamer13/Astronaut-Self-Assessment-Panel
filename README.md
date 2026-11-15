@@ -183,3 +183,7 @@ On the check-up start screen, **Load real crew values from NASA** reads the Insp
 ## Movable panels
 
 Every card (users, check-in, pre/post-flight, immune, body map, status, details and each tab's main card) is a panel with a small bar: drag the grip ⠿ to move it (also between columns), use ◀ ▲ ▼ ▶ to move with the keyboard, – to minimize, ⤢ to maximize (Esc closes). The layout is remembered in this browser; **Reset layout** (top right) restores the default. The daily check-in form is now grouped by body region. Code: `js/panels.js`, tests `tests/panels.test.js`.
+
+## Customizable pre-flight and post-flight periods
+
+Each astronaut flies a different schedule, so time points are no longer fixed to the dataset's (L-92, L-44, L-3, R+1 …). A time point is **any number of days (0–3650) before launch (L-<days>) or after return (R+<days>)**. In the forms you type the days, or pick the measurement date and the app works out the time point from the user's own **Mission periods** (launch and return dates, both optional). The same panel sets how many pre-flight values a baseline needs (1–10, default 3). Code: `js/mission.js` (tests: `tests/mission.test.js`).

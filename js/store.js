@@ -7,6 +7,7 @@
  */
 (function (root) {
   'use strict';
+  var Mission = (typeof module !== 'undefined' && module.exports && typeof require === 'function') ? require('./mission.js') : root.Mission;
 
   var KEY = 'sa_users_v2';
   var LEGACY_KEY = 'sa_manual_entries_v1'; // single-user entries from the first prototype
@@ -25,6 +26,7 @@
       for (var i = 0; i < state.users.length; i++) if (state.users[i].id === id) return state.users[i];
       return null;
     }
+    function cleanMissionOf(m) { var r = Mission.cleanMission(m || {}); return r.ok ? r.mission : { launch: null, ret: null, minPre: 3 }; }
     function cleanFlight(r) {
       var o = { tp: r.tp };
       Object.keys(r).forEach(function (k) { if (k !== 'tp' && typeof r[k] === 'number' && isFinite(r[k])) o[k] = r[k]; });
@@ -35,6 +37,7 @@
         id: String(u.id),
         name: String(u.name).slice(0, NAME_MAX),
         entries: Array.isArray(u.entries) ? u.entries.filter(function (e) { return e && typeof e.date === 'string'; }) : [],
+        mission: cleanMissionOf(u.mission),
         flight: Array.isArray(u.flight) ? u.flight.filter(function (r) { return r && typeof r.tp === 'string'; }).map(cleanFlight) : [],
         immune: Array.isArray(u.immune) ? u.immune.filter(function (r) { return r && typeof r.tp === 'string'; }).map(cleanFlight) : []
       };
@@ -92,7 +95,7 @@
       add: function (name) {
         var v = validateName(name);
         if (!v.ok) return v;
-        var u = { id: nextId(), name: v.name, entries: [], flight: [], immune: [] };
+        var u = { id: nextId(), name: v.name, entries: [], flight: [], immune: [], mission: { launch: null, ret: null, minPre: 3 } };
         state.users.push(u); state.current = u.id; persist();
         return { ok: true, user: u };
       },
@@ -109,6 +112,12 @@
         u.entries.push(entry); persist(); return true;
       },
       clearEntries: function (id) { var u = find(id); if (!u) return false; u.entries = []; persist(); return true; },
+      missionOf: function (id) { var u = find(id); return u ? Object.assign({}, u.mission) : { launch: null, ret: null, minPre: 3 }; },
+      saveMission: function (id, raw) {
+        var u = find(id); if (!u) return { ok: false, code: 'nouser' };
+        var r = Mission.cleanMission(raw); if (!r.ok) return r;
+        u.mission = r.mission; persist(); return { ok: true, mission: Object.assign({}, u.mission) };
+      },
       flightOf: function (id) { var u = find(id); return u ? u.flight : []; },
       saveFlight: function (id, rec) {
         var u = find(id); if (!u || !rec || typeof rec.tp !== 'string') return false;
