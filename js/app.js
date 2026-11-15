@@ -209,7 +209,7 @@
 
   var viewCtx = null;
   function ctx() {
-    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
+    if (!viewCtx) viewCtx = { t: t, Core: Core, Osdr: Osdr, Osd635: Osd635, Osd569: Osd569, Immune: Immune, Live: Live, Checkup: Checkup, Crewlive: Crewlive, Demo: Demo, Expression: Expression, store: store, chip: chip, indLabel: indLabel, unitOf: unitOf, fmt: fmt };
     return viewCtx;
   }
 

@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261115d';
+    sc.src = 'js/osd635-genes.js?v=20261115e';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -651,9 +651,9 @@
   }
 
   /* ---------- Guided check-up: one question per slide ---------- */
-  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '' };
+  var wiz = { i: -1, answers: {}, checked: {}, demo: false, err: '', saveMsg: '', live: { state: 'idle' } };
 
-  function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
+  function wizLabel(ctx, q) { return q.kind === 'vital' ? ctx.t('ind.' + q.id) : q.panel ? ctx.t('lab.' + q.id) : q.kind === 'lab' ? ctx.t('o9.a.' + q.id) : ctx.t('cu.q.' + q.id + '.ask'); }
 
   function wizValueText(ctx, item) {
     var t = ctx.t, q = item.q;
@@ -664,8 +664,16 @@
   }
 
   function crewBlock(ctx, q) {
-    var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '';
-    if (q.kind === 'lab') { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
+    var t = ctx.t, C = ctx.Checkup, src = null, r = null, unit = '', liveR = wiz.live && wiz.live.ranges && wiz.live.ranges[q.id];
+    if (liveR) { // real NASA file, read live
+      var fl = function (a) { return a ? a[0] + '–' + a[1] : '—'; }, lb = el('div', { class: 'callout' });
+      lb.appendChild(el('strong', { text: t('cu.crew.title') + ' ' })); lb.appendChild(el('span', { class: 'badge real', text: t('cu.live.badge') }));
+      lb.appendChild(el('p', { class: 'meta', text: t('cu.crew.line', { src: liveR.src, n: liveR.n, pre: fl(liveR.pre), post: fl(liveR.post), unit: liveR.unit }) }));
+      if (liveR.lo !== null || liveR.hi !== null) lb.appendChild(el('p', { class: 'meta', text: t('cu.live.lab', { lo: liveR.lo === null ? '—' : liveR.lo, hi: liveR.hi === null ? '—' : liveR.hi, unit: liveR.unit }) }));
+      return lb;
+    }
+    if (q.kind === 'lab' && !q.panel) { src = 'OSD-569'; r = C.crewRange(ctx.Osd569.CREW, q.id, ctx.Osd569.PRE); unit = ctx.Osd569.analyte(q.id).unit; }
+    else if (q.panel) { /* no bundled copy of this analyte: only the live file has it */ }
     else if (q.id === 'glucose') { src = 'OSD-575'; r = C.crewRange(ctx.Osdr.CREW, q.id, ctx.Osdr.PRE); unit = ctx.Osdr.ANALYTES.glucose ? ctx.Osdr.ANALYTES.glucose.unit : 'mg/dL'; }
     var box = el('div', { class: 'callout' });
     box.appendChild(el('strong', { text: t('cu.crew.title') }));
@@ -738,6 +746,21 @@
       var b1 = el('button', { type: 'button', text: t('cu.startOwn') }), b2 = el('button', { type: 'button', text: t('cu.startDemo') });
       b1.addEventListener('click', function () { reset(false); }); b2.addEventListener('click', function () { reset(true); });
       box.appendChild(b1); box.appendChild(document.createTextNode(' ')); box.appendChild(b2);
+      // real crew values from NASA files (needs the relay address from the Live NASA tab); bundled copies are used otherwise
+      var lv = el('div', { class: 'callout' }), lb = el('button', { type: 'button', text: t(wiz.live.state === 'busy' ? 'cu.live.busy' : 'cu.live.load') });
+      lv.appendChild(el('strong', { text: t('cu.live.title') })); lv.appendChild(el('p', { class: 'meta', text: t('cu.live.hint') }));
+      lb.addEventListener('click', function () {
+        var proxy = ''; try { proxy = window.localStorage.getItem('ll_proxy') || ''; } catch (e) { /* storage may be blocked */ }
+        ctx.Live.setBase(proxy); wiz.live = { state: 'busy' }; renderCheckup(ctx, box, hooks);
+        ctx.Crewlive.load(function (u) { return window.fetch(u); }, ctx.Live).then(function (r) {
+          wiz.live = r.ok ? { state: 'ok', ranges: r.ranges, studies: r.studies, errors: r.errors } : { state: 'err', errors: r.errors };
+          renderCheckup(ctx, box, hooks);
+        });
+      });
+      lv.appendChild(lb);
+      if (wiz.live.state === 'ok') lv.appendChild(el('p', { class: 'msg', text: t('cu.live.ok', { studies: wiz.live.studies.join(', ') }) + (wiz.live.errors.length ? ' ' + t('cu.live.partial', { studies: wiz.live.errors.map(function (e) { return e.study; }).join(', ') }) : '') }));
+      if (wiz.live.state === 'err') lv.appendChild(el('p', { class: 'form-msg err', role: 'alert', text: t('cu.live.err') }));
+      box.appendChild(lv);
       return;
     }
 
