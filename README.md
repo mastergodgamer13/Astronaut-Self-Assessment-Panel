@@ -82,7 +82,7 @@ node tests/expression.test.js # fold change and gene classification
 Covers baseline/deviation logic, edge cases (too few readings, zero variance, missing values), input validation and the simulated scenario.
 
 ## Languages
-English, Türkçe, Italiano, Español (selector in the header; choice saved in this browser; default from browser language).
+English, Türkçe, Italiano, Español, Français, Deutsch, Русский, 日本語, 中文 (selector in the header; choice saved in this browser; default from browser language).
 Translations are machine-assisted drafts and have **not** been reviewed by native-speaking or medical translators.
 
 ## How measurements get into the app, and how they are taken in space
@@ -224,7 +224,7 @@ The former "Real data" tab is now **Inspirations**: it introduces the three NASA
 
 ## Languages
 
-Complete translations: English, Türkçe, Italiano, Español. Core-interface translations (navigation, guided check-up, statuses, self-care actions, body regions, indicators, reminders, offline notice): Français, Deutsch, Русский (Roscosmos), 日本語 (JAXA), 中文 (Tiangong). Anything not translated yet (for example the NASA study pages) shows in English, so nothing is empty. These translations were not reviewed by native-speaking medical staff; please have them checked before real use. To add a language, copy `js/lang/fr.js`, translate the values, add the script tag in `index.html` and the notification text in `js/remind.js`.
+All nine languages cover every text in the app: English, Türkçe, Italiano, Español, Français, Deutsch, Русский (Roscosmos), 日本語 (JAXA), 中文 (Tiangong). A test checks that each language has exactly the English key set with matching placeholders; any key missing in the future falls back to English.
 
 ## Real crew values from NASA: remembered, and a default relay
 

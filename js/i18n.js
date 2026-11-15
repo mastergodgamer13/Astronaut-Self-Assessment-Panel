@@ -3015,9 +3015,9 @@
     return { missing: missing, extra: extra };
   }
 
-  /** Add a partially translated language (js/lang/*.js). Missing keys fall back to English. */
+  /** Add a language from js/lang/*.js. Any key it lacks falls back to English. */
   function extend(code, name, dict) {
-    if (!D[code]) LANGS.push({ code: code, name: name, partial: true });
+    if (!D[code]) LANGS.push({ code: code, name: name });
     D[code] = dict;
   }
 
