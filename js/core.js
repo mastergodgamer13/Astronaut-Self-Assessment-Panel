@@ -37,7 +37,16 @@
     { id: 'urine',   label: 'Urine colour (1 pale - 8 dark)', unit: 'scale', min: 1, max: 8, step: 1, region: 'kidneys', integer: true },
     { id: 'fluids',  label: 'Fluids drunk today',   unit: 'L',     min: 0,   max: 10,  step: 0.1, region: 'kidneys' },
     { id: 'meals',   label: 'Meals eaten today',    unit: 'meals', min: 0,   max: 10,  step: 1,   region: 'gut', integer: true },
-    { id: 'discomfort', label: 'Stomach discomfort (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'gut', integer: true }
+    { id: 'discomfort', label: 'Stomach discomfort (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'gut', integer: true },
+    { id: 'dyspnea', label: 'Shortness of breath (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'lungs', integer: true },
+    { id: 'cough',   label: 'Cough (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'lungs', integer: true },
+    { id: 'breathhold', label: 'Comfortable breath-hold', unit: 's', min: 5, max: 180, step: 1, region: 'lungs', integer: true, baselineOnly: true },
+    { id: 'urinations', label: 'Urinations today', unit: '/day', min: 0, max: 30, step: 1, region: 'kidneys', integer: true },
+    { id: 'swelling', label: 'Swelling of face, hands or ankles (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'kidneys', integer: true },
+    { id: 'wtchange', label: 'Body mass change in the last week', unit: 'kg', min: -15, max: 15, step: 0.1, region: 'kidneys' },
+    { id: 'nausea',  label: 'Nausea (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'gut', integer: true },
+    { id: 'appetite', label: 'Loss of appetite (0 none - 3 severe)', unit: 'pts', min: 0, max: 3, step: 1, region: 'gut', integer: true },
+    { id: 'stools',  label: 'Bowel movements today', unit: '/day', min: 0, max: 20, step: 1, region: 'gut', integer: true }
   ];
 
 
@@ -65,7 +74,16 @@
     urine:    { ok: [1, 3],     watch: [1, 6] },
     fluids:   { ok: [1.5, 10],  watch: [0.8, 10] },
     meals:    { ok: [3, 10],    watch: [1, 10] },
-    discomfort: { ok: [0, 1],   watch: [0, 2] }
+    discomfort: { ok: [0, 1],   watch: [0, 2] },
+    dyspnea:  { ok: [0, 1],     watch: [0, 2] },
+    cough:    { ok: [0, 1],     watch: [0, 2] },
+    // about 4-8 urinations a day is usual; fewer than 3 suggests too little fluid or a kidney problem
+    urinations: { ok: [3, 10],  watch: [1, 14] },
+    swelling: { ok: [0, 1],     watch: [0, 2] },
+    wtchange: { ok: [-1.5, 1.5], watch: [-3, 3] },
+    nausea:   { ok: [0, 1],     watch: [0, 2] },
+    appetite: { ok: [0, 1],     watch: [0, 2] },
+    stools:   { ok: [1, 3],     watch: [0, 5] }
   };
 
   /** Zone of one value against a {ok:[lo,hi], watch:[lo,hi]} reference: 'ok' | 'watch' | 'attention'. */
