@@ -35,6 +35,18 @@
     if (!users.length) { box.appendChild(el('p', { class: 'empty', text: t('cmp.empty') })); return; }
 
     var assessed = users.map(function (u) { return { user: u, a: Core.assess(u.entries) }; });
+    // who to look at first: red before yellow before green before no data; ties by number of red, then yellow items
+    var RANK = { attention: 0, watch: 1, ok: 2, nodata: 3 };
+    var order = assessed.slice().sort(function (a, b) {
+      return (RANK[a.a.overall] - RANK[b.a.overall]) || (b.a.counts.attention - a.a.counts.attention) || (b.a.counts.watch - a.a.counts.watch) || a.user.name.localeCompare(b.user.name);
+    });
+    box.appendChild(el('h3', { text: t('cmp.first.title') }));
+    var ol = el('ol', { class: 'cmpfirst' });
+    order.forEach(function (x) {
+      ol.appendChild(el('li', null, [ctx.chip(x.a.overall), ' ', el('strong', { text: x.user.name }), ' ',
+        el('span', { class: 'meta', text: t('cmp.first.counts', { red: x.a.counts.attention, yellow: x.a.counts.watch, green: x.a.counts.ok }) })]));
+    });
+    box.appendChild(ol); box.appendChild(el('p', { class: 'hint', text: t('cmp.first.note') }));
     var head = el('tr', null, [el('th', { scope: 'col', text: t('cmp.indicator') })]);
     assessed.forEach(function (x) {
       head.appendChild(el('th', { scope: 'col' }, [x.user.name, el('div', { class: 'meta', text: t('cmp.readings', { n: x.user.entries.length }) })]));

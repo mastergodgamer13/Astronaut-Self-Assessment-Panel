@@ -485,6 +485,11 @@
     buildMissionForm();
     buildFlightForm();
     buildImmuneForm();
+    if (window.Display) {
+      var ds = $('disp-size'), dh = $('disp-hc'), cur = Display.get();
+      if (ds) { ds.value = cur.size; ds.addEventListener('change', function () { Display.set({ size: ds.value }); }); }
+      if (dh) { dh.checked = cur.contrast; dh.addEventListener('change', function () { Display.set({ contrast: dh.checked }); }); }
+    }
     Panels.init({ t: t });
     if (window.Pwa) Pwa.init({ t: t, lang: function () { return I18n.get(); } });
     $('layout-reset').addEventListener('click', function () { Panels.reset(); });
