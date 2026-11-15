@@ -11,7 +11,12 @@
     en: { title: 'Daily check-up', body: 'Time for your daily health check. It takes a minute.' },
     tr: { title: 'Günlük kontrol', body: 'Günlük sağlık kontrolünüzün zamanı geldi. Bir dakika sürer.' },
     it: { title: 'Controllo giornaliero', body: 'È ora del tuo controllo di salute giornaliero. Basta un minuto.' },
-    es: { title: 'Chequeo diario', body: 'Es hora de tu chequeo de salud diario. Lleva un minuto.' }
+    es: { title: 'Chequeo diario', body: 'Es hora de tu chequeo de salud diario. Lleva un minuto.' },
+    fr: { title: 'Bilan quotidien', body: 'C’est l’heure de votre bilan de santé quotidien. Cela prend une minute.' },
+    de: { title: 'Täglicher Check', body: 'Zeit für Ihren täglichen Gesundheitscheck. Er dauert eine Minute.' },
+    ru: { title: 'Ежедневная проверка', body: 'Пора пройти ежедневную проверку здоровья. Это займёт минуту.' },
+    ja: { title: '毎日のチェック', body: '毎日の健康チェックの時間です。1分で終わります。' },
+    zh: { title: '每日自检', body: '该做每日健康自检了，只需一分钟。' }
   };
 
   function minutes(hhmm) {
