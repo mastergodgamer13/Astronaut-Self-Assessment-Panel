@@ -1,12 +1,19 @@
 # Sprint 3 Report
 
-## Live NASA Catalogue
-Due to the time and storage limitations caused by manually adding the desired datasets to our software, we came up with an alternative solution to provide astronauts with easier access to any dataset they might need. We established a live NASA catalogue that includes datasets related to human health from the NASA OSDR Repository. Furthermore, during this sprint, we made several improvements to our project, such as:
+## Focus
+During Sprint 3, our primary focus was to improve data accessibility, expand the software's analytical capabilities, and enhance its availability across different devices.
 
-- The addition of various indicators for detecting and analyzing the status of vital organs, such as the eyes, heart, chest, and many more.
-- A radiation indicator for identifying potential genetic diseases or changes.
-- A tab named "Inspirations", which showcases the initial datasets we used in our project, including their charts and graphics.
+## Challenge
+One of the major challenges we faced was the time-consuming process of manually integrating datasets into our software. This approach also created additional storage requirements for both mobile and PC users.
 
-Other improvements focused on making the software accessible to mobile users and enabling notification and reminder settings for each device.
+## Changes Made to the Software
+- **NASA Live Catalogue:** we developed a live catalogue that gives users access to human health-related datasets from the NASA Open Science Data Repository (OSDR) without requiring them to download and store every dataset inside the software.
+- **New health indicators:** we introduced indicators designed to examine different aspects of human health, such as the eyes, heart, and chest.
+- **Radiation indicator:** we added an indicator intended to support the investigation of radiation-related genetic changes.
+- **Inspirations section:** we introduced a new section that presents the initial datasets used throughout our project, along with their corresponding charts and visualizations, so users can explore the data behind the software and better understand its foundations.
+- **Mobile access:** we worked on making the software available to mobile users.
+- **Notifications and reminders:** we enhanced the notification and reminder settings to provide device-specific functionality.
+- **Testing and fixes:** we conducted multiple tests to evaluate the new features, identify potential issues, and improve the overall stability of the software. Based on the test results, we made the necessary code improvements and resolved several errors.
 
-Throughout the development process, we also conducted tests to diagnose and resolve errors, ensuring that each new feature functioned properly.
+## Summary
+Overall, Sprint 3 represented an important step towards making our software more accessible, efficient, scalable, and user-friendly while expanding its data analysis capabilities.
