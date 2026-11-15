@@ -2511,6 +2511,12 @@
     return { missing: missing, extra: extra };
   }
 
-  var api = { LANGS: LANGS, DICT: D, t: t, set: set, get: get, init: init, diff: diff };
+  /** Add a partially translated language (js/lang/*.js). Missing keys fall back to English. */
+  function extend(code, name, dict) {
+    if (!D[code]) LANGS.push({ code: code, name: name, partial: true });
+    D[code] = dict;
+  }
+
+  var api = { LANGS: LANGS, DICT: D, t: t, set: set, get: get, init: init, diff: diff, extend: extend };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.I18n = api;
 })(typeof window !== 'undefined' ? window : globalThis);

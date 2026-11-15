@@ -211,3 +211,7 @@ The former "Real data" tab is now **Inspirations**: it introduces the three NASA
    npx wrangler deploy -c worker/wrangler.push.toml
    ```
    Then paste the worker address and the public key in Reminders → advanced. The relay stores only the device's push address, chosen time, time zone and language, never health values, and sends a message with no content; the app shows the text in the user's language. Tests: `node tests/push.test.mjs`.
+
+## Languages
+
+Complete translations: English, Türkçe, Italiano, Español. Core-interface translations (navigation, guided check-up, statuses, self-care actions, body regions, indicators, reminders, offline notice): Français, Deutsch, Русский (Roscosmos), 日本語 (JAXA), 中文 (Tiangong). Anything not translated yet (for example the NASA study pages) shows in English, so nothing is empty. These translations were not reviewed by native-speaking medical staff; please have them checked before real use. To add a language, copy `js/lang/fr.js`, translate the values, add the script tag in `index.html` and the notification text in `js/remind.js`.
