@@ -1,6 +1,6 @@
-# Live Lifesaver
+# Astronaut Self-Assessment Panel
 
-Continuation of *Astronot Self Check* (NASA Space Apps 2026). Goal of this repository: instead of adding each NASA dataset by hand, read the NASA OSDR catalog live and make every human spaceflight health dataset reachable from the app. Everything below is the base that was imported from the first project.
+Continuation of *Astronaut Self Check* (NASA Space Apps 2026). Goal of this repository: instead of adding each NASA dataset by hand, read the NASA OSDR catalog live and make every human spaceflight health dataset reachable from the app. Everything below is the base that was imported from the first project.
 
 ## Guided check-up and guided demo (new)
 
@@ -22,7 +22,7 @@ The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/os
 
 If **Check connection** says the browser blocked the request, NASA's server does not allow web pages to read its answers directly (CORS). Fix with a free Cloudflare Worker that relays read-only requests: (1) cloudflare.com → sign up (free) → Workers & Pages → Create → Worker; (2) open the editor, replace the code with the contents of `worker/osdr-proxy.js`, Deploy; (3) copy the address it gives (`https://<name>.<you>.workers.dev`) into the **Relay address** field of the Live NASA catalog tab. The Worker only relays GET requests under `/osdr/` and `/biodata/` and stores nothing.
 
-# Base project: Astronot Self Check
+# Base project: Astronaut Self Check
 
 Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for Astronauts on Space Missions"* (health monitoring).
 
