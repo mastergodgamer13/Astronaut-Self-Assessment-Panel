@@ -1,6 +1,6 @@
 {
-  "name": "Live Lifesaver — astronaut self-check",
-  "short_name": "Lifesaver",
+  "name": "Astronaut Self-Assessment Panel",
+  "short_name": "Astronaut Panel",
   "description": "Self-check for astronauts on long missions: green, yellow or red status from one check-up. Works offline.",
   "start_url": "./index.html",
   "scope": "./",

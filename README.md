@@ -1,6 +1,6 @@
 # Astronaut Self-Assessment Panel
 
-Continuation of *Astronaut Self Check* (NASA Space Apps 2026). Goal of this repository: instead of adding each NASA dataset by hand, read the NASA OSDR catalog live and make every human spaceflight health dataset reachable from the app. Everything below is the base that was imported from the first project.
+Continuation of *Astronaut Self-Assessment Panel* (NASA Space Apps 2026). Goal of this repository: instead of adding each NASA dataset by hand, read the NASA OSDR catalog live and make every human spaceflight health dataset reachable from the app. Everything below is the base that was imported from the first project.
 
 ## Guided check-up and guided demo (new)
 
@@ -22,7 +22,7 @@ The **Live NASA catalog** tab calls the NASA OSDR API (`https://osdr.nasa.gov/os
 
 If **Check connection** says the browser blocked the request, NASA's server does not allow web pages to read its answers directly (CORS). Fix with a free Cloudflare Worker that relays read-only requests: (1) cloudflare.com → sign up (free) → Workers & Pages → Create → Worker; (2) open the editor, replace the code with the contents of `worker/osdr-proxy.js`, Deploy; (3) copy the address it gives (`https://<name>.<you>.workers.dev`) into the **Relay address** field of the Live NASA catalog tab. The Worker only relays GET requests under `/osdr/` and `/biodata/` and stores nothing.
 
-# Base project: Astronaut Self Check
+# Base project: Astronaut Self-Assessment Panel
 
 Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for Astronauts on Space Missions"* (health monitoring).
 
@@ -56,7 +56,7 @@ Prototype for the **NASA Space Apps Challenge 2026** challenge *"Software for As
 
 ## Live site
 
-https://mastergodgamer13.github.io/live-lifesaver/ (GitHub Pages, served from the repository root of `main`).
+https://mastergodgamer13.github.io/Astronaut-Self-Assessment-Panel/ (GitHub Pages, served from the repository root of `main`).
 
 ## Run it
 
@@ -240,7 +240,7 @@ The check-up start page now has a **relay address** field of its own (same saved
 
 The address is the address of **your own** Cloudflare Worker that runs `worker/push.mjs`. About 10 minutes, free plan.
 
-1. **Make the keys:** open `tools/vapid.html` (on the site: `…/live-lifesaver/tools/vapid.html`), press **Make my keys**. Keep the page open; you need both values below.
+1. **Make the keys:** open `tools/vapid.html` (on the site: `…/Astronaut-Self-Assessment-Panel/tools/vapid.html`), press **Make my keys**. Keep the page open; you need both values below.
 2. **Create the Worker:** Cloudflare dashboard → Workers & Pages → Create → **Create Worker** → name it (for example `lifesaver-reminders`) → Deploy → **Edit code** → delete everything → paste the whole of `worker/push.mjs` → Deploy.
 3. **Create storage:** Storage & Databases → **KV** → Create a namespace named `lifesaver-subs`.
 4. **Connect them:** open the Worker → Settings → **Bindings** → Add → **KV namespace** → variable name `SUBS` (exactly) → choose `lifesaver-subs` → Save.

@@ -1,4 +1,4 @@
-// Cloudflare Worker: a tiny read-only relay so the Live Lifesaver web page may read NASA OSDR data.
+// Cloudflare Worker: a tiny read-only relay so the Astronaut Self-Assessment Panel web page may read NASA OSDR data.
 // NASA's server does not send the header that lets other web pages read its answers (CORS); this Worker adds it.
 // Only GET requests to NASA OSDR paths are forwarded. Nothing is stored. Deploy: see README ("Live proxy").
 const UPSTREAMS = {
