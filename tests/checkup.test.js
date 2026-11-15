@@ -51,7 +51,7 @@ test('every non-green case of every question has actions (low and high where pos
 });
 test('run: guided demo astronaut is mostly green with yellow cases and one red', () => {
   const r = C.run(Demo.guided());
-  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 22, watch: 8, attention: 1, nodata: 4 });
+  assert.strictEqual(r.overall, 'attention'); assert.deepStrictEqual(r.counts, { ok: 24, watch: 9, attention: 1, nodata: 1 });
   assert.strictEqual(r.sorted[0].id, 'temp'); assert.ok(r.items.find(i => i.id === 'lymph').skipped);
 });
 test('run: nothing answered is nodata, never ok', () => {
@@ -98,6 +98,18 @@ test('baseline-only slides (reaction, grip) are recorded without a colour and do
     assert.strictEqual(ev.status, 'nodata'); assert.strictEqual(ev.baselineOnly, true);
     assert.deepStrictEqual(C.advice(Q(id), ev), []);
   });
+});
+
+test('own-usual comparison: reaction slower / grip weaker / breath-hold shorter than usual by >10 % yellow, >20 % red', () => {
+  assert.strictEqual(C.evaluate(Q('reaction'), 300, 290).status, 'ok');
+  assert.strictEqual(C.evaluate(Q('reaction'), 330, 290).status, 'watch');
+  assert.strictEqual(C.evaluate(Q('reaction'), 400, 290).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('reaction'), 250, 290).status, 'ok'); // faster is fine
+  assert.strictEqual(C.evaluate(Q('grip'), 28, 35).status, 'watch');
+  assert.strictEqual(C.evaluate(Q('grip'), 25, 35).status, 'attention');
+  assert.strictEqual(C.evaluate(Q('breathhold'), 20, 32).status, 'attention');
+  assert.ok(C.advice(Q('grip'), C.evaluate(Q('grip'), 28, 35)).includes('stretch'));
+  assert.strictEqual(C.evaluate(Q('grip'), 28, '').status, 'nodata'); // no usual value: no colour
 });
 
 test('reactionMedian: median of valid taps, needs 3, ignores nonsense', () => {

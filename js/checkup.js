@@ -39,7 +39,9 @@
     sleep:   { low: ['sleepSchedule', 'dimLight', 'noCaffeine', 'relax'], high: ['sleepSchedule', 'tellCrew'] },
     mood:    { low: ['talk', 'exercise', 'sleepSchedule', 'dailyLog'] },
     exercise: { low: ['exercise', 'stretch', 'nutrition', 'dailyLog'] },
-    breathhold: {}, reaction: {}, grip: {},
+    breathhold: { low: ['rest', 'breathe', 'checkAir', 'tellCrew'] },
+    reaction: { high: ['rest', 'sleepSchedule', 'hydrate', 'checkAir', 'tellCrew'] },
+    grip: { low: ['exercise', 'stretch', 'nutrition', 'tellCrew'] },
     dyspnea: { high: ['sitUpright', 'breathe', 'checkAir', 'tellCrew'] },
     cough:   { high: ['hydrate', 'checkAir', 'hygiene', 'tellCrew'] },
     urinations: { low: ['drinkMore', 'tellCrew'], high: ['dailyLog', 'tellCrew'] },
@@ -94,12 +96,21 @@
   }
 
   /** Status of one parsed value: { status, dir } with status in nodata|ok|watch|attention and dir in 'low'|'high'|'any'|null. */
-  function evaluate(q, value) {
+  // Measurements with no fixed normal range: judged against the person's OWN usual value (percent change in the worse direction).
+  var WORSE = { reaction: 'high', grip: 'low', breathhold: 'low' };
+  var PCT = { watch: 0.10, attention: 0.20 }; // prototype cut-offs, need review
+
+  function evaluate(q, value, usual) {
     if (value === undefined || value === null) return { status: 'nodata', dir: null };
     if (q.kind === 'symptom') return { status: value >= 3 ? 'attention' : value === 2 ? 'watch' : 'ok', dir: 'any' };
     if (q.kind === 'redflag') return { status: value === 'yes' ? 'attention' : 'ok', dir: 'any' };
     var z = zonesOf(q);
-    if (!z) return { status: 'nodata', dir: null, baselineOnly: true }; // no fixed zones: judged against the person's own earlier values only
+    if (!z) {
+      var u = Number(usual);
+      if (!WORSE[q.id] || !(u > 0)) return { status: 'nodata', dir: null, baselineOnly: true };
+      var pct = (value - u) / u, worse = WORSE[q.id] === 'high' ? pct : -pct; // positive = worse than usual
+      return { status: worse > PCT.attention ? 'attention' : worse > PCT.watch ? 'watch' : 'ok', dir: worse > PCT.watch ? WORSE[q.id] : null, baselineOnly: true, usual: u, pct: Math.round(pct * 100) };
+    }
     var status = Core.zoneOf(z, value);
     return { status: status, dir: value < z.ok[0] ? 'low' : value > z.ok[1] ? 'high' : null };
   }
@@ -115,7 +126,7 @@
   /** answers: { id: raw }. -> { items:[{q, value, skipped, status, dir, actions}], overall, counts } with problems first. */
   function run(answers) {
     var items = QUESTIONS.map(function (q) {
-      var p = parse(q, answers ? answers[q.id] : undefined), ev = p.ok && !p.skipped ? evaluate(q, p.value) : { status: 'nodata', dir: null };
+      var p = parse(q, answers ? answers[q.id] : undefined), ev = p.ok && !p.skipped ? evaluate(q, p.value, answers ? answers['usual_' + q.id] : undefined) : { status: 'nodata', dir: null };
       return { q: q, id: q.id, value: p.ok && !p.skipped ? p.value : null, skipped: !p.ok || !!p.skipped, status: ev.status, dir: ev.dir,
         actions: p.ok && !p.skipped ? advice(q, ev) : [] };
     });

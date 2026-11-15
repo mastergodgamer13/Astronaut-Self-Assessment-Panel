@@ -158,7 +158,7 @@
     if (genesWaiting) { genesWaiting.push({ ok: ok, fail: fail }); return; }
     genesWaiting = [{ ok: ok, fail: fail }];
     var sc = document.createElement('script');
-    sc.src = 'js/osd635-genes.js?v=20261115c';
+    sc.src = 'js/osd635-genes.js?v=20261115d';
     sc.onload = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.ok(); }); };
     sc.onerror = function () { var w = genesWaiting; genesWaiting = null; w.forEach(function (x) { x.fail(); }); };
     document.head.appendChild(sc);
@@ -680,10 +680,11 @@
     box.innerHTML = '';
     if (!wiz.checked[q.id] || !p.ok) return;
     if (p.skipped) { box.appendChild(el('p', { class: 'msg', text: t('cu.nodata') })); return; }
-    var ev = C.evaluate(q, p.value), acts = C.advice(q, ev);
-    if (ev.baselineOnly) { box.appendChild(el('p', { class: 'msg', text: t('cu.baseline') })); return; }
+    var ev = C.evaluate(q, p.value, wiz.answers['usual_' + q.id]), acts = C.advice(q, ev);
+    if (ev.baselineOnly && ev.status === 'nodata') { box.appendChild(el('p', { class: 'msg', text: t('cu.baseline') })); return; }
     box.appendChild(el('div', null, [ctx.chip(ev.status)]));
     box.appendChild(el('p', { class: 'msg', text: ev.status === 'ok' ? t('cu.okmsg') : t('msg.' + ev.status) }));
+    if (ev.baselineOnly) box.appendChild(el('div', { class: 'meta', text: t('cu.vsUsual', { ref: ev.usual, pct: Math.abs(ev.pct), word: t(ev.dir ? 'cu.worse' : 'cu.same') }) }));
     var z = C.zonesOf(q);
     if (z) box.appendChild(el('div', { class: 'meta', text: t('ref.line', { oklo: z.ok[0], okhi: z.ok[1], wlo: z.watch[0], whi: z.watch[1], unit: C.limits(q).unit }) }));
     if (acts.length) {
@@ -773,6 +774,15 @@
       slide.appendChild(el('label', null, [inp, ' ', el('span', { text: L.unit })]));
       read = function () { return inp.value; };
       if (q.id === 'reaction') slide.appendChild(reactionTest(ctx, inp));
+      if (!C.zonesOf(q)) { // no fixed normal range: ask for the person's own usual value
+        var ukey = 'usual_' + q.id, saved = ''; try { saved = window.localStorage.getItem('ll.' + ukey) || ''; } catch (e) { /* storage may be blocked */ }
+        if (wiz.answers[ukey] === undefined && saved) wiz.answers[ukey] = saved;
+        var uin = el('input', { type: 'number', name: 'usual', inputmode: 'decimal', step: String(L.step), min: String(L.min), max: String(L.max), 'aria-label': t('cu.usual') });
+        if (wiz.answers[ukey] !== undefined && wiz.answers[ukey] !== '') uin.value = String(wiz.answers[ukey]);
+        slide.appendChild(el('label', null, [el('span', { text: t('cu.usual') + ' ' }), uin, ' ', el('span', { text: L.unit })]));
+        slide.appendChild(el('p', { class: 'meta', text: t('cu.usualHelp') }));
+        uin.addEventListener('input', function () { wiz.answers[ukey] = uin.value; wiz.checked[q.id] = false; try { window.localStorage.setItem('ll.' + ukey, uin.value); } catch (e) { /* ignore */ } });
+      }
     }
     var errBox = el('p', { class: 'form-msg err', role: 'alert', text: wiz.err });
     slide.appendChild(errBox);

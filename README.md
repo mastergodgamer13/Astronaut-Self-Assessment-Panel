@@ -168,3 +168,7 @@ Nine more signs that need no instrument (35 slides in total). Every slide now sa
 | Lungs | shortness of breath, cough, comfortable breath-hold (own baseline only) | clock with seconds; pulse oximeter only for SpO2 |
 | Kidneys & hydration | urinations per day, swelling, body-mass change over a week | mass measurement device for weight only; mirror for swelling |
 | Digestion | nausea, loss of appetite, bowel movements per day | none |
+
+### Reaction time, grip strength and breath-hold now get a colour
+
+These have no universal normal range, so the check-up slide asks for your own usual value (remembered in the browser). Worse than usual by more than 10 % is yellow, by more than 20 % is red (slower reaction, weaker grip, shorter breath-hold). Without a usual value the slide only records the number. On the dashboard they get a colour after 7 daily readings, from your own baseline. Cut-offs are prototype values for flight-surgeon review.
