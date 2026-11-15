@@ -103,9 +103,11 @@
 
   function relabel() {
     var f = $('remindform'); if (!f) return;
-    Array.prototype.forEach.call(f.querySelectorAll('[data-rt]'), function (n) { n.textContent = t(n.getAttribute('data-rt')); });
+    // the panel title and hint sit outside the form, so look at the whole page
+    Array.prototype.forEach.call(document.querySelectorAll('[data-rt]'), function (n) { n.textContent = t(n.getAttribute('data-rt')); });
     $('remind-install').textContent = t('remind.install');
-    $('remind-ios').textContent = /iphone|ipad|ipod/i.test(navigator.userAgent) ? t('remind.ios') : '';
+    var installed = navigator.standalone === true || (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches);
+    $('remind-ios').textContent = /iphone|ipad|ipod/i.test(navigator.userAgent) && !installed ? t('remind.ios') : ''; // the tip is only needed before the app is on the Home Screen
   }
 
   function wire() {
