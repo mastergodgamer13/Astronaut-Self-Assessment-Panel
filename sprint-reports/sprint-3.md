@@ -9,7 +9,7 @@ One of the major challenges we faced was the time-consuming process of manually 
 ## Changes Made to the Software
 - **NASA Live Catalogue:** we developed a live catalogue that gives users access to human health-related datasets from the NASA Open Science Data Repository (OSDR) without requiring them to download and store every dataset inside the software.
 - **New health indicators:** we introduced indicators designed to examine different aspects of human health, such as the eyes, heart, and chest.
-- **Radiation indicator:** we added an indicator intended to support the investigation of radiation-related genetic changes.
+- **Radiation indicator:** we added a radiation indicator that records a radiation alert (an alarm entered by the user), so it can be tracked alongside the other health indicators. It does not measure radiation or diagnose any health effect.
 - **Inspirations section:** we introduced a new section that presents the initial datasets used throughout our project, along with their corresponding charts and visualizations, so users can explore the data behind the software and better understand its foundations.
 - **Mobile access:** we worked on making the software available to mobile users.
 - **Notifications and reminders:** we enhanced the notification and reminder settings to provide device-specific functionality.
